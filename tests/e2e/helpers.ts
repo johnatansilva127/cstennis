@@ -1,4 +1,4 @@
-import { expect, type Page, type BrowserContext } from "@playwright/test";
+import { expect, type Page, type BrowserContext, type BrowserContextOptions, type TestInfo } from "@playwright/test";
 import { Secret, TOTP } from "otpauth";
 import { readFileSync } from "node:fs";
 
@@ -57,4 +57,55 @@ export async function logout(page: Page, area: "app" | "professor" = "app") {
   await page.goto(`/${area}/mais`);
   await page.locator("main").getByRole("button", { name: "Sair" }).click();
   await page.waitForURL(/\/entrar/);
+}
+
+/** Consulta direta ao banco LOCAL (somente para preparar/verificar cenários de teste). */
+export async function localSql<T extends Record<string, unknown>>(text: string, params: unknown[] = []): Promise<T[]> {
+  const { default: pg } = await import("pg");
+  const { testEnv } = await import("../helpers/env");
+  const client = new pg.Client({ connectionString: testEnv().dbUrl });
+  await client.connect();
+  try {
+    return (await client.query<T>(text, params)).rows;
+  } finally {
+    await client.end();
+  }
+}
+
+/** Último código de 6 dígitos enviado ao e-mail (Mailpit local). */
+export async function latestEmailCode(email: string, after = 0): Promise<string> {
+  const { testEnv } = await import("../helpers/env");
+  const base = testEnv().mailpitUrl;
+  for (let i = 0; i < 40; i++) {
+    const res = await fetch(`${base}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}&limit=5`);
+    const body = (await res.json()) as { messages?: { ID: string; Created: string }[] };
+    const msg = (body.messages ?? []).find((m) => new Date(m.Created).getTime() >= after);
+    if (msg) {
+      const full = (await (await fetch(`${base}/api/v1/message/${msg.ID}`)).json()) as { Text?: string; HTML?: string };
+      const m = `${full.Text ?? ""} ${full.HTML ?? ""}`.match(/\b(\d{6})\b/);
+      if (m) return m[1];
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`Nenhum código recebido para ${email}`);
+}
+
+/** Data de hoje (YYYY-MM-DD) no fuso da escola. */
+export function todaySaoPaulo(offsetDays = 0) {
+  const d = new Date(Date.now() + offsetDays * 86400_000);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(d);
+}
+
+/** Opções do projeto (viewport, dispositivo, idioma, fuso) para contextos extras. */
+export function contextOptions(info: TestInfo): BrowserContextOptions {
+  const u = info.project.use;
+  return {
+    baseURL: u.baseURL, viewport: u.viewport, userAgent: u.userAgent, deviceScaleFactor: u.deviceScaleFactor,
+    isMobile: u.isMobile, hasTouch: u.hasTouch, locale: u.locale, timezoneId: u.timezoneId, colorScheme: u.colorScheme,
+  };
+}
+
+/** Zera os contadores de tentativas do banco LOCAL (higiene entre cenários). */
+export async function resetRateLimits() {
+  await localSql("delete from private.rate_limits");
 }

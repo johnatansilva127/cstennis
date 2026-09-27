@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { creds, expectNoSecretsInStorage, login, loginCoach, logout, watchErrors } from "./helpers";
+import { creds, expectNoSecretsInStorage, login, loginCoach, logout, watchErrors, resetRateLimits } from "./helpers";
 
+test.beforeEach(resetRateLimits);
 test.describe.configure({ timeout: 180_000 });
 
 const COACH_PAGES = [

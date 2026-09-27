@@ -78,23 +78,30 @@ export default async function AgendaPage({ searchParams }: PageProps<"/professor
       ) : null}
 
       {view === "mes" && !pendentes ? (
-        <div role="grid" aria-label={`Calendário de ${monthLabel(base)}`} className="grid grid-cols-7 gap-1">
-          {[1, 2, 3, 4, 5, 6, 7].map((d) => <div key={d} role="columnheader" className="py-1 text-center text-xs font-semibold uppercase text-muted">{weekdayLabel(d, true)}</div>)}
+        <section aria-label={`Calendário de ${monthLabel(base)}`}>
+          {/* Cabeçalho só visual: cada dia já é anunciado com a data completa. */}
+          <div aria-hidden className="grid grid-cols-7 gap-1">
+            {[1, 2, 3, 4, 5, 6, 7].map((d) => <div key={d} className="py-1 text-center text-xs font-semibold uppercase text-muted">{weekdayLabel(d, true)}</div>)}
+          </div>
+          <ul className="grid grid-cols-7 gap-1">
           {days.map((d) => {
             const items = byDay.get(d) ?? [];
             const active = items.filter((o) => o.status !== "cancelled").length;
             const inMonth = d.slice(0, 7) === base.slice(0, 7);
             return (
-              <Link key={d} role="gridcell" href={`/professor/agenda?visao=semana&data=${d}`}
+              <li key={d}>
+              <Link href={`/professor/agenda?visao=semana&data=${d}`}
                 aria-label={`${formatDateLong(d)}: ${active} aula(s)`}
-                className={cn("flex min-h-16 flex-col rounded-xl border p-1.5 text-sm", inMonth ? "border-border bg-surface" : "border-transparent bg-surface-2 text-muted",
+                className={cn("flex h-full min-h-16 flex-col rounded-xl border p-1.5 text-sm", inMonth ? "border-border bg-surface" : "border-transparent bg-surface-2 text-muted",
                   d === today && "ring-2 ring-primary")}>
                 <span className="font-semibold">{Number(d.slice(8))}</span>
                 {active ? <span className="mt-auto rounded-md bg-info-bg px-1 text-xs font-semibold text-info">{active} aula{active > 1 ? "s" : ""}</span> : null}
               </Link>
+              </li>
             );
           })}
-        </div>
+          </ul>
+        </section>
       ) : (
         <div className={cn("grid gap-3", !pendentes && "xl:grid-cols-7")}>
           {(pendentes ? [...byDay.keys()].sort() : days).map((d) => {

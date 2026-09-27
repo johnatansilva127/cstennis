@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Não anuncia a tecnologia do servidor.
+  poweredByHeader: false,
 };
 
 export default nextConfig;
