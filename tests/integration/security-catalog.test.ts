@@ -41,7 +41,7 @@ describe("Revisão automática das políticas de acesso", () => {
       select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
        where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')`);
     expect(rows).toEqual([]);
-    const serverOnly = ["bootstrap_coach", "consume_rate_limit", "invitation_preview", "invitation_email_for_code",
+    const serverOnly = ["bootstrap_coach", "consume_rate_limit", "invitation_preview", "invitation_email_for_code", "invitation_email",
       "complete_payment_submission_upload", "fail_payment_submission_upload", "set_file_scan_result", "mark_file_deleted", "run_jobs_now"];
     const exec = await sql<{ proname: string }>(`
       select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace

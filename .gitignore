@@ -56,3 +56,4 @@ supabase/signing_keys.json
 *.dump
 *.sql.gz
 /backups/
+.demo-credentials.json

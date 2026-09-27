@@ -1225,3 +1225,34 @@ begin
      order by o.starts_at;
 end;
 $$;
+
+-- Vagas fixas do aluno (sem dados de colegas).
+create or replace function public.student_enrollments(p_student_id uuid)
+returns table (
+  enrollment_id uuid, series_root_id uuid, title text, weekday int, start_time time, duration_minutes int,
+  format public.lesson_format, level text, location_name text, court_name text, valid_from date, valid_until date
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_today date;
+begin
+  if not private.is_coach_of((select organization_id from public.students where id = p_student_id)) then
+    perform private.require_module_access(p_student_id);
+  end if;
+  v_today := private.org_today((select organization_id from public.students where id = p_student_id));
+  return query
+    select e.id, e.series_root_id, s.title, s.weekday::int, s.start_time, s.duration_minutes, s.format, s.level,
+           l.name, c.name, e.valid_from, e.valid_until
+      from public.enrollments e
+      join public.recurring_slots s on s.id = e.series_id
+      join public.locations l on l.id = s.location_id
+      left join public.courts c on c.id = s.court_id
+     where e.student_id = p_student_id and e.status = 'active'
+       and coalesce(e.valid_until, 'infinity'::date) >= v_today
+     order by e.valid_from, s.weekday, s.start_time;
+end;
+$$;

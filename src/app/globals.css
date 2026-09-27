@@ -1,26 +1,180 @@
 @import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/montserrat";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Tokens de design CS Tennis. Paleta inspirada em quadras azuis (sem marcas de
+ * terceiros). Contraste verificado (WCAG AA):
+ *  - texto pequeno sobre claro usa --primary-strong (#0072A3, 5,3:1);
+ *  - #008BC5 fica para acentos, foco e áreas grandes;
+ *  - amarelo só como destaque sobre azul profundo (6,0:1) ou fundo com texto escuro.
+ */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f6fa;
+  --surface: #ffffff;
+  --surface-2: #edf2f8;
+  --border: #d5dee9;
+  --border-strong: #9fb0c4;
+  --text: #172033;
+  --muted: #4b5870;
+  --primary: #008bc5;
+  --primary-strong: #0072a3;
+  --primary-strong-hover: #005f88;
+  --on-primary: #ffffff;
+  --deep: #064d8e;
+  --accent: #ffd529;
+  --on-accent: #172033;
+  --link: #0072a3;
+  --focus: #008bc5;
+  --success: #067647;
+  --success-bg: #ecfdf3;
+  --warning: #8a4b00;
+  --warning-bg: #fff6db;
+  --danger: #b42318;
+  --danger-bg: #fef3f2;
+  --info: #0b5e8a;
+  --info-bg: #e6f4fb;
+  --neutral: #4b5870;
+  --neutral-bg: #eef2f6;
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 4px 16px rgb(16 24 40 / 0.06);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #091827;
+  --surface: #11283b;
+  --surface-2: #163247;
+  --border: #24425a;
+  --border-strong: #3d6282;
+  --text: #f1f5f9;
+  --muted: #a9b8ca;
+  --primary: #3fb3e3;
+  --primary-strong: #0072a3;
+  --primary-strong-hover: #0a84ba;
+  --on-primary: #ffffff;
+  --deep: #064d8e;
+  --accent: #ffd529;
+  --on-accent: #172033;
+  --link: #5bc0eb;
+  --focus: #5bc0eb;
+  --success: #6ce9a6;
+  --success-bg: #0c2f24;
+  --warning: #fec84b;
+  --warning-bg: #33280b;
+  --danger: #fda29b;
+  --danger-bg: #3a1618;
+  --info: #7cd4fd;
+  --info-bg: #0d2f45;
+  --neutral: #a9b8ca;
+  --neutral-bg: #1b3348;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root[data-theme="system"] {
+    color-scheme: dark;
+    --bg: #091827;
+    --surface: #11283b;
+    --surface-2: #163247;
+    --border: #24425a;
+    --border-strong: #3d6282;
+    --text: #f1f5f9;
+    --muted: #a9b8ca;
+    --primary: #3fb3e3;
+    --primary-strong: #0072a3;
+    --primary-strong-hover: #0a84ba;
+    --on-primary: #ffffff;
+    --deep: #064d8e;
+    --accent: #ffd529;
+    --on-accent: #172033;
+    --link: #5bc0eb;
+    --focus: #5bc0eb;
+    --success: #6ce9a6;
+    --success-bg: #0c2f24;
+    --warning: #fec84b;
+    --warning-bg: #33280b;
+    --danger: #fda29b;
+    --danger-bg: #3a1618;
+    --info: #7cd4fd;
+    --info-bg: #0d2f45;
+    --neutral: #a9b8ca;
+    --neutral-bg: #1b3348;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-strong-hover: var(--primary-strong-hover);
+  --color-on-primary: var(--on-primary);
+  --color-deep: var(--deep);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-link: var(--link);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-neutral: var(--neutral);
+  --color-neutral-bg: var(--neutral-bg);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Montserrat Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --shadow-card: var(--shadow);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Fundo da marca: degradê azul com linhas de quadra sutis. */
+.brand-gradient {
+  background: radial-gradient(120% 60% at 100% 0%, rgb(63 179 227 / 0.35), transparent 60%),
+    linear-gradient(180deg, #0b5fa0 0%, #064d8e 55%, #0a3a6e 100%);
+  color: #ffffff;
+}
+
+.label-caps {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

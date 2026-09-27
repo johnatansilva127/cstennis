@@ -348,6 +348,21 @@ begin
 end;
 $$;
 
+-- E-mail do convite pendente e válido, sem contabilizar envio (service_role).
+create or replace function public.invitation_email(p_token text)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select i.email
+    from public.invitations i
+    join private.invitation_tokens t on t.invitation_id = i.id
+   where t.token_hash = private.hash_token(p_token)
+     and i.status = 'pending' and i.expires_at > now() and i.failed_attempts < 5;
+$$;
+
 -- Aceitação atômica. Retorna jsonb {ok, code}. Tentativas com conta de outro
 -- e-mail são contadas (e persistidas) e bloqueiam o convite após 5 falhas.
 create or replace function public.accept_invitation(p_token text)

@@ -1,0 +1,60 @@
+import { expect, type Page, type BrowserContext } from "@playwright/test";
+import { Secret, TOTP } from "otpauth";
+import { readFileSync } from "node:fs";
+
+export type DemoCreds = { password: string; coach: { email: string; totp_secret: string }; adults: string[]; guardian: string };
+
+export function creds(): DemoCreds {
+  return JSON.parse(readFileSync(".demo-credentials.json", "utf8"));
+}
+
+const usedWindows = new Map<string, number>();
+export async function totpCode(secret: string) {
+  let w = Math.floor(Date.now() / 30000);
+  if (usedWindows.get(secret) === w) {
+    await new Promise((r) => setTimeout(r, 30000 - (Date.now() % 30000) + 300));
+    w = Math.floor(Date.now() / 30000);
+  }
+  usedWindows.set(secret, w);
+  return new TOTP({ secret: Secret.fromBase32(secret) }).generate();
+}
+
+export async function login(page: Page, email: string, password: string) {
+  await page.goto("/entrar");
+  await page.getByLabel(/^E-mail/).fill(email);
+  await page.getByLabel(/^Senha/).fill(password);
+  await page.getByRole("button", { name: "Entrar" }).click();
+}
+
+export async function loginCoach(page: Page) {
+  const c = creds();
+  await login(page, c.coach.email, c.password);
+  await page.waitForURL(/\/mfa/);
+  await page.getByLabel(/^Código de 6 dígitos/).fill(await totpCode(c.coach.totp_secret));
+  await page.getByRole("button", { name: "Confirmar" }).click();
+  await page.waitForURL(/\/professor/);
+}
+
+/** Coleta erros de console, exceções de página e violações de CSP. */
+export function watchErrors(page: Page) {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(`pageerror [${page.url()}]: ${e.message}`));
+  page.on("console", (m) => {
+    if (m.type() === "error") errors.push(`console [${page.url()}] ${m.location().url}: ${m.text()}`);
+  });
+  return errors;
+}
+
+export async function expectNoSecretsInStorage(context: BrowserContext, page: Page) {
+  const storage = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
+  expect(storage).not.toMatch(/eyJ[A-Za-z0-9_-]{10,}/);
+  const cookies = await context.cookies();
+  for (const c of cookies.filter((c) => c.name.startsWith("sb-"))) expect(c.httpOnly, c.name).toBe(true);
+}
+
+/** Sai pela tela "Mais" (o botão existe em todos os tamanhos de tela). */
+export async function logout(page: Page, area: "app" | "professor" = "app") {
+  await page.goto(`/${area}/mais`);
+  await page.locator("main").getByRole("button", { name: "Sair" }).click();
+  await page.waitForURL(/\/entrar/);
+}

@@ -416,7 +416,7 @@ begin
   if p_size_bytes is null or p_size_bytes <= 0 or p_size_bytes > 10485760 then
     perform private.fail('CS422', 'Arquivo vazio ou maior que 10 MB.');
   end if;
-  if p_sha256 is null or p_sha256 !~ '^[0-9a-f]{64}$' then
+  if p_sha256 is not null and p_sha256 !~ '^[0-9a-f]{64}$' then
     perform private.fail('CS422', 'Arquivo inválido.');
   end if;
   if exists (select 1 from public.payment_submissions
@@ -442,9 +442,12 @@ begin
 end;
 $$;
 
--- Chamado pelo servidor (service_role) após gravar o arquivo no storage privado
--- e (quando configurado) verificar antimalware.
-create or replace function public.complete_payment_submission_upload(p_file_id uuid, p_scan_status public.scan_status, p_scan_engine text)
+-- Chamado pelo servidor (service_role) depois de baixar o objeto enviado,
+-- validar os bytes reais (tipo, tamanho, estrutura) e verificar antimalware.
+create or replace function public.complete_payment_submission_upload(
+  p_file_id uuid, p_scan_status public.scan_status, p_scan_engine text,
+  p_sha256 text default null, p_size_bytes int default null, p_width int default null, p_height int default null
+)
 returns text
 language plpgsql
 security definer
@@ -462,8 +465,16 @@ begin
   select * into v_sub from public.payment_submissions where file_id = v_file.id for update;
   select * into v_inv from public.invoices where id = v_sub.invoice_id for update;
 
+  if p_sha256 is not null and p_sha256 !~ '^[0-9a-f]{64}$' then
+    perform private.fail('CS422', 'Hash inválido.');
+  end if;
+  if p_size_bytes is not null and (p_size_bytes <= 0 or p_size_bytes > 10485760) then
+    perform private.fail('CS422', 'Tamanho inválido.');
+  end if;
   update public.file_objects set status = 'stored', scan_status = p_scan_status, scan_engine = p_scan_engine,
-         scanned_at = case when p_scan_status = 'pending' then null else now() end
+         scanned_at = case when p_scan_status = 'pending' then null else now() end,
+         sha256 = coalesce(p_sha256, sha256), size_bytes = coalesce(p_size_bytes, size_bytes),
+         image_width = coalesce(p_width, image_width), image_height = coalesce(p_height, image_height)
    where id = v_file.id;
 
   if p_scan_status = 'infected' then

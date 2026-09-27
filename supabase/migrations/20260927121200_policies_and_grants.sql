@@ -243,7 +243,7 @@ grant execute on function
   public.update_occurrence(uuid, jsonb), public.cancel_occurrence(uuid, text), public.restore_occurrence(uuid),
   public.create_unavailability(date, date, uuid, text),
   public.save_attendance(uuid, jsonb), public.occurrence_attendance(uuid), public.attendance_summary(uuid, date, date),
-  public.coach_agenda(date, date), public.student_lessons(uuid, date, date),
+  public.coach_agenda(date, date), public.student_lessons(uuid, date, date), public.student_enrollments(uuid),
   public.update_pix_settings(text, public.pix_key_type, text, text, boolean),
   public.set_tuition_term(uuid, int, int, date, date, text), public.end_tuition_term(uuid, date),
   public.generate_invoices_now(), public.create_manual_invoice(uuid, date, int, date, text),
@@ -270,8 +270,8 @@ to authenticated;
 -- RPCs exclusivas do servidor (service role): nunca expostas ao cliente.
 grant execute on function
   public.bootstrap_coach(text, uuid, text), public.consume_rate_limit(text, int, int),
-  public.invitation_preview(text), public.invitation_email_for_code(text),
-  public.complete_payment_submission_upload(uuid, public.scan_status, text),
+  public.invitation_preview(text), public.invitation_email_for_code(text), public.invitation_email(text),
+  public.complete_payment_submission_upload(uuid, public.scan_status, text, text, int, int, int),
   public.fail_payment_submission_upload(uuid, text), public.set_file_scan_result(uuid, public.scan_status, text),
   public.mark_file_deleted(uuid, text), public.run_jobs_now(text)
 to service_role;
