@@ -122,6 +122,7 @@ provisória (`src/components/brand/brand.tsx`). Para trocar, coloque o arquivo e
 
 ## Documentação
 
+- **[Próximos passos para colocar no ar](docs/PROXIMOS_PASSOS.md)** (situação atual da implantação e o que falta)
 - [Arquitetura](docs/ARQUITETURA.md) e [decisões técnicas e premissas](docs/DECISOES.md)
 - [Modelo de dados](docs/MODELO_DE_DADOS.md) e [matriz de permissões](docs/MATRIZ_DE_PERMISSOES.md)
 - [Política de arquivos](docs/ARQUIVOS.md)
