@@ -97,17 +97,6 @@ begin
 end;
 $$;
 
-create or replace function private.mask_secret(p text)
-returns text
-language sql
-immutable
-set search_path = ''
-as $$
-  select case when p is null then null
-              when char_length(p) <= 4 then '****'
-              else left(p, 2) || repeat('*', greatest(char_length(p) - 4, 3)) || right(p, 2) end;
-$$;
-
 create or replace function public.update_pix_settings(
   p_receiver_name text, p_key_type public.pix_key_type, p_pix_key text, p_city text, p_brcode_enabled boolean
 )
@@ -140,12 +129,13 @@ begin
     receiver_name = excluded.receiver_name, key_type = excluded.key_type, pix_key = excluded.pix_key,
     city = excluded.city, brcode_enabled = excluded.brcode_enabled, updated_by = excluded.updated_by, updated_at = now();
 
-  -- Auditoria sem a chave completa.
+  -- Auditoria SEM a chave (nem parcial): só o tipo e se ela mudou.
   perform private.audit(v_org, 'pix.update', 'pix_settings', v_org, null, jsonb_build_object(
     'before', case when v_before.organization_id is null then null else jsonb_build_object(
-      'receiver_name', v_before.receiver_name, 'key_type', v_before.key_type, 'key', private.mask_secret(v_before.pix_key)) end,
-    'after', jsonb_build_object('receiver_name', v_name, 'key_type', p_key_type, 'key', private.mask_secret(v_key),
-                                'brcode_enabled', coalesce(p_brcode_enabled, false))));
+      'receiver_name', v_before.receiver_name, 'key_type', v_before.key_type) end,
+    'after', jsonb_build_object('receiver_name', v_name, 'key_type', p_key_type,
+                                'brcode_enabled', coalesce(p_brcode_enabled, false)),
+    'key_changed', v_before.pix_key is distinct from v_key));
   perform private.emit(v_org, 'pix_changed', '{}'::jsonb, format('pix_changed:%s:%s', v_org, extract(epoch from clock_timestamp())));
 end;
 $$;

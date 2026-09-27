@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rpcError, setupOrg, verifyTotp, rpc } from "../helpers/db";
+import { processOutbox, rpcError, setupOrg, sql, verifyTotp, rpc } from "../helpers/db";
 
 function decode(token: string) {
   return JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"));
@@ -18,6 +18,19 @@ describe("Step-up de MFA", () => {
     // Ação sensível passa com MFA recente.
     await rpc(org.coach, "update_pix_settings", {
       p_receiver_name: "Professor Teste", p_key_type: "email", p_pix_key: "professor@example.test", p_city: "Sao Paulo", p_brcode_enabled: false });
+    // Troca de Pix é auditada e avisada ao professor sem registrar a chave (nem parcialmente).
+    await rpc(org.coach, "update_pix_settings", {
+      p_receiver_name: "Professor Teste", p_key_type: "email", p_pix_key: "outra-chave@example.test", p_city: "Sao Paulo", p_brcode_enabled: false });
+    const audits = await sql<{ diff: unknown }>(
+      "select diff from public.audit_events where organization_id = $1 and action = 'pix.update' order by created_at", [org.orgId]);
+    expect(audits).toHaveLength(2);
+    expect(audits[1].diff).toMatchObject({ key_changed: true, after: { key_type: "email" } });
+    await processOutbox();
+    const notes = await sql<{ title: string; body: string }>(
+      "select title, body from public.notifications where organization_id = $1 and title = 'Dados Pix alterados'", [org.orgId]);
+    expect(notes.length).toBeGreaterThan(0);
+    const logged = JSON.stringify({ audits, notes });
+    for (const fragment of ["professor@", "outra-chave", "example.test"]) expect(logged).not.toContain(fragment);
     // Chave inválida continua rejeitada.
     const err = await rpcError(org.coach, "update_pix_settings", {
       p_receiver_name: "Professor Teste", p_key_type: "cpf", p_pix_key: "111.111.111-11", p_city: "Sao Paulo", p_brcode_enabled: false });

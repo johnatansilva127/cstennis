@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { creds, localSql, login, resetRateLimits, watchErrors } from "./helpers";
+import { creds, latestEmailLink, localSql, login, resetRateLimits, watchErrors } from "./helpers";
 
 test.describe.configure({ timeout: 180_000 });
 test.beforeEach(resetRateLimits);
@@ -150,4 +150,42 @@ test("login: limite de tentativas bloqueia força bruta", async ({ page }, info)
   }
   expect(blocked).toBe(true);
   await resetRateLimits();
+});
+
+test("recuperação de senha: link por e-mail, uso único, e nova senha funciona", async ({ page, context }, info) => {
+  test.skip(info.project.name !== "desktop", "Independe do tamanho de tela.");
+  const c = creds();
+  const email = c.adults[2];
+  const temporary = "Temporaria-E2E-2026";
+  const since = Date.now() - 1000;
+  await page.goto("/recuperar-senha");
+  await page.getByLabel(/^E-mail/).fill(email);
+  await page.getByRole("button", { name: "Enviar link" }).click();
+  await expect(page.getByText(/Se houver uma conta com este e-mail/)).toBeVisible();
+  const link = await latestEmailLink(email, since);
+  expect(new URL(link).pathname).toBe("/auth/confirm");
+
+  await page.goto(link);
+  await page.waitForURL(/\/redefinir-senha/);
+  await page.getByLabel(/^Nova senha/).fill(temporary);
+  await page.getByLabel(/^Repita a nova senha/).fill(temporary);
+  await page.getByRole("button", { name: "Salvar nova senha" }).click();
+  await page.waitForURL(/\/app$/);
+
+  // O mesmo link não funciona de novo.
+  await context.clearCookies();
+  await page.goto(link);
+  await expect(page).toHaveURL(/\/recuperar-senha\?erro=link/);
+
+  // Senha antiga deixou de valer; a nova funciona. Depois restaura a senha de demonstração.
+  await login(page, email, c.password);
+  await expect(page.getByRole("alert").filter({ hasText: /incorretos/ })).toBeVisible();
+  await login(page, email, temporary);
+  await page.waitForURL(/\/app$/);
+  await page.goto("/app/perfil");
+  const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Trocar senha" }) });
+  await form.getByLabel(/^Nova senha/).fill(c.password);
+  await form.getByLabel(/^Repita a nova senha/).fill(c.password);
+  await form.getByRole("button", { name: "Trocar senha" }).click();
+  await expect(page.getByText(/Senha alterada/)).toBeVisible();
 });

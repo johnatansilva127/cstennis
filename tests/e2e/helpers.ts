@@ -109,3 +109,21 @@ export function contextOptions(info: TestInfo): BrowserContextOptions {
 export async function resetRateLimits() {
   await localSql("delete from private.rate_limits");
 }
+
+/** Último link de redefinição de senha enviado ao e-mail (Mailpit local). */
+export async function latestEmailLink(email: string, after = 0): Promise<string> {
+  const { testEnv } = await import("../helpers/env");
+  const base = testEnv().mailpitUrl;
+  for (let i = 0; i < 40; i++) {
+    const res = await fetch(`${base}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}&limit=5`);
+    const body = (await res.json()) as { messages?: { ID: string; Created: string }[] };
+    const msg = (body.messages ?? []).find((m) => new Date(m.Created).getTime() >= after);
+    if (msg) {
+      const full = (await (await fetch(`${base}/api/v1/message/${msg.ID}`)).json()) as { HTML?: string };
+      const m = (full.HTML ?? "").match(/href="([^"]+\/auth\/confirm[^"]+)"/);
+      if (m) return m[1].replace(/&amp;/g, "&");
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`Nenhum link recebido para ${email}`);
+}
