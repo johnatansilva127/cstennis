@@ -88,6 +88,15 @@ as $$
 declare
   v_students uuid[];
 begin
+  if p_event.event_type not in (
+       'invitation_accepted', 'enrollment_request_created', 'payment_submission_received', 'pix_changed',
+       'privacy_request_created', 'enrollment_request_decided', 'enrollment_created', 'enrollment_ended',
+       'occurrence_cancelled', 'occurrence_changed', 'series_changed', 'lesson_reminder', 'invoice_created',
+       'invoice_due_soon', 'invoice_overdue', 'submission_approved', 'submission_rejected', 'payment_reversed',
+       'restriction_changed', 'assessment_published', 'match_commented') then
+    raise exception 'Tipo de evento desconhecido: %', p_event.event_type;
+  end if;
+
   if p_event.event_type in ('invitation_accepted', 'enrollment_request_created', 'payment_submission_received',
                              'pix_changed', 'privacy_request_created') then
     return query
