@@ -8,7 +8,6 @@
  * Grava as credenciais de demonstração em .demo-credentials.json (ignorado pelo git).
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { Secret, TOTP } from "otpauth";
 import pg from "pg";
 import sharp from "sharp";
 import { createHash } from "node:crypto";
@@ -59,14 +58,12 @@ async function main() {
   const coachId = await ensureUser(coachEmail, "Professor Demonstração");
   const orgId = await must(admin.rpc("bootstrap_coach", { p_org_name: "CS Tennis (demonstração)", p_user_id: coachId }), "bootstrap");
   const coach = await signIn(coachEmail);
+  // Remove autenticadores de seeds antigos: o professor acessa só com senha (D18).
   const { data: factors } = await coach.auth.mfa.listFactors();
   for (const f of factors?.all ?? []) await coach.auth.mfa.unenroll({ factorId: f.id }).catch(() => undefined);
   await admin.auth.admin.mfa.listFactors({ userId: coachId }).then(async ({ data }) => {
     for (const f of data?.factors ?? []) await admin.auth.admin.mfa.deleteFactor({ userId: coachId, id: f.id });
   });
-  const enrolled = await must<{ id: string; totp: { secret: string } }>(coach.auth.mfa.enroll({ factorType: "totp", friendlyName: "Demo" }), "mfa enroll");
-  const totp = new TOTP({ secret: Secret.fromBase32(enrolled.totp.secret) });
-  await must(coach.auth.mfa.challengeAndVerify({ factorId: enrolled.id, code: totp.generate() }), "mfa verify");
   const rpc = <T = unknown>(client: SupabaseClient, fn: string, args: Record<string, unknown>) => must<T>(client.rpc(fn, args), fn);
 
   await rpc(coach, "update_organization_settings", { p_settings: {
@@ -188,14 +185,14 @@ async function main() {
   const creds = {
     aviso: "Credenciais FICTÍCIAS apenas para ambiente local/homologação.",
     password: PASS,
-    coach: { email: coachEmail, totp_secret: enrolled.totp.secret },
+    coach: { email: coachEmail },
     adults: [ana.email, bruno.email, carla.email],
     guardian: guardianEmail,
     children: [clara.student_id, davi.student_id],
   };
   writeFileSync(".demo-credentials.json", JSON.stringify(creds, null, 2), { mode: 0o600 });
   console.log("Dados de demonstração criados. Credenciais em .demo-credentials.json");
-  console.log(`Professor: ${coachEmail} / ${PASS} — código MFA: npx tsx scripts/totp.ts`);
+  console.log(`Professor: ${coachEmail} / ${PASS}`);
 }
 
 main().catch((e) => {

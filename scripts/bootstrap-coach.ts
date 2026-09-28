@@ -7,7 +7,6 @@
  *
  * - Cria a conta (sem senha) e a organização, e vincula como professor.
  * - Imprime UMA vez um link de uso único (vale 1 hora) para definir a senha.
- * - No primeiro acesso o professor é obrigado a configurar a verificação em duas etapas.
  * Não há cadastro público que permita virar professor.
  */
 import { createClient } from "@supabase/supabase-js";
@@ -64,7 +63,6 @@ async function main() {
   console.log(`Organização: ${orgId}`);
   console.log("\nLink de uso único para definir a senha (não compartilhe; vale 1 hora):");
   console.log(`${appUrl}/auth/confirm?token_hash=${link.properties.hashed_token}&type=recovery\n`);
-  console.log("Depois de definir a senha, o professor configurará a verificação em duas etapas no primeiro acesso.");
 }
 
 main().catch((e) => {
