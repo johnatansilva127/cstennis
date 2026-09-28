@@ -69,7 +69,8 @@ test("jornada completa: cadastro, convite, pedido de vaga, aprovação, comprova
   await coach.goto("/professor/pedidos");
   const request = cardWith(coach, name, "Aprovar");
   await request.getByRole("button", { name: "Aprovar" }).click();
-  await expect(coach.getByText("Pedido aprovado e vaga confirmada.")).toBeVisible();
+  // A mensagem de sucesso fica no cartão, que sai da lista quando a página atualiza.
+  await expect(cardWith(coach, name, "Aprovar")).toHaveCount(0);
 
   // 6. A aula aparece para o aluno.
   await student.goto("/app/aulas");
@@ -93,14 +94,15 @@ test("jornada completa: cadastro, convite, pedido de vaga, aprovação, comprova
   const png = await sharp({ create: { width: 320, height: 480, channels: 3, background: "#ffffff" } }).png().toBuffer();
   await student.locator("#proof-file").setInputFiles({ name: "comprovante-ficticio.png", mimeType: "image/png", buffer: png });
   await student.getByRole("button", { name: /Enviar comprovante/ }).click();
-  await expect(student.getByText(/Comprovante (enviado|recebido)/)).toBeVisible({ timeout: 30_000 });
+  // A mensagem de sucesso some quando a página atualiza para "em análise" (o formulário sai da tela).
+  await expect(student.getByText(/Comprovante (enviado|recebido|em análise)/).first()).toBeVisible({ timeout: 30_000 });
   await expect(student.getByText("Pagamento confirmado pelo professor")).toHaveCount(0);
 
   // 9. Professor confere e aprova; o aluno vê a confirmação.
   await coach.goto("/professor/financeiro/comprovantes");
   const proof = cardWith(coach, name, "Aprovar: crédito conferido");
   await proof.getByRole("button", { name: "Aprovar: crédito conferido" }).click();
-  await expect(coach.getByText("Pagamento confirmado.")).toBeVisible();
+  await expect(cardWith(coach, name, "Aprovar: crédito conferido")).toHaveCount(0);
   await student.reload();
   await expect(student.getByText("Pagamento confirmado pelo professor")).toBeVisible();
 
