@@ -10,7 +10,7 @@ const COACH_PAGES = [
   "/professor/financeiro", "/professor/financeiro/comprovantes", "/professor/evolucao", "/professor/jogos", "/professor/locais",
   "/professor/avisos", "/professor/responsaveis", "/professor/convites", "/professor/mais", "/professor/configuracoes",
   "/professor/configuracoes/pix", "/professor/configuracoes/restricoes", "/professor/configuracoes/organizacao",
-  "/professor/configuracoes/seguranca", "/professor/configuracoes/privacidade", "/professor/configuracoes/sistema",
+  "/professor/configuracoes/privacidade", "/professor/configuracoes/sistema",
   "/professor/configuracoes/perfil",
 ];
 

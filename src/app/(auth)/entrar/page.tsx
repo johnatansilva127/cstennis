@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Entrar" };
 export default async function SignInPage({ searchParams }: PageProps<"/entrar">) {
   const params = await searchParams;
   const ctx = await getUserContext();
-  if (ctx) redirect(ctx.is_coach ? (ctx.aal === "aal2" ? "/professor" : "/mfa") : "/app");
+  if (ctx) redirect(ctx.is_coach ? "/professor" : "/app");
   const next = typeof params.next === "string" ? params.next : undefined;
   const reason = typeof params.motivo === "string" ? params.motivo : undefined;
   return (

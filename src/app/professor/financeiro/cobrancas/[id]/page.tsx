@@ -68,8 +68,6 @@ export default async function InvoicePage({ params }: PageProps<"/professor/fina
                         <ActionForm action={reversePaymentAction.bind(null, p.id)} submitLabel="Estornar" submitVariant="danger"
                           confirm="Estornar o pagamento? O registro é mantido e a cobrança volta a ficar em aberto.">
                           <TextField name="reason" label="Motivo do estorno" required />
-                          <TextField name="mfa_code" label="Código do autenticador" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required
-                            hint="Ações financeiras sensíveis exigem confirmação em duas etapas." />
                         </ActionForm>
                       </Disclosure>
                     </div>

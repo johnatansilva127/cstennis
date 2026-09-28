@@ -1,22 +1,10 @@
 import { expect, type Page, type BrowserContext, type BrowserContextOptions, type TestInfo } from "@playwright/test";
-import { Secret, TOTP } from "otpauth";
 import { readFileSync } from "node:fs";
 
-export type DemoCreds = { password: string; coach: { email: string; totp_secret: string }; adults: string[]; guardian: string };
+export type DemoCreds = { password: string; coach: { email: string }; adults: string[]; guardian: string };
 
 export function creds(): DemoCreds {
   return JSON.parse(readFileSync(".demo-credentials.json", "utf8"));
-}
-
-const usedWindows = new Map<string, number>();
-export async function totpCode(secret: string) {
-  let w = Math.floor(Date.now() / 30000);
-  if (usedWindows.get(secret) === w) {
-    await new Promise((r) => setTimeout(r, 30000 - (Date.now() % 30000) + 300));
-    w = Math.floor(Date.now() / 30000);
-  }
-  usedWindows.set(secret, w);
-  return new TOTP({ secret: Secret.fromBase32(secret) }).generate();
 }
 
 export async function login(page: Page, email: string, password: string) {
@@ -29,9 +17,6 @@ export async function login(page: Page, email: string, password: string) {
 export async function loginCoach(page: Page) {
   const c = creds();
   await login(page, c.coach.email, c.password);
-  await page.waitForURL(/\/mfa/);
-  await page.getByLabel(/^Código de 6 dígitos/).fill(await totpCode(c.coach.totp_secret));
-  await page.getByRole("button", { name: "Confirmar" }).click();
   await page.waitForURL(/\/professor/);
 }
 

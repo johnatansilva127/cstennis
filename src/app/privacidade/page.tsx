@@ -52,7 +52,7 @@ export default async function PrivacyPage() {
         <h2>Cookies</h2>
         <p>Usamos apenas cookies essenciais: sessão de login (protegida, inacessível a scripts) e preferência de tema/aluno selecionado. Não usamos cookies de publicidade ou analytics.</p>
         <h2>Segurança</h2>
-        <p>Conexão criptografada, controle de acesso por vínculo, verificação em duas etapas para o professor, arquivos em armazenamento privado com links temporários e registro de auditoria. Nenhum sistema é 100% seguro; incidentes são tratados conforme procedimento documentado.</p>
+        <p>Conexão criptografada, controle de acesso por vínculo, senhas fortes com limite de tentativas, arquivos em armazenamento privado com links temporários e registro de auditoria. Nenhum sistema é 100% seguro; incidentes são tratados conforme procedimento documentado.</p>
         <p className="pt-4"><Link href="/" className="font-semibold text-link">Voltar ao CS Tennis</Link></p>
       </main>
     </div>

@@ -38,9 +38,6 @@ export async function TabHistorico({ studentId, student, supabase, tz }: TabProp
       <div className="space-y-3">
         <Disclosure summary="Exportar todos os dados (JSON)">
           <form action={`/api/exportar/${studentId}`} method="post" className="space-y-3">
-            <label htmlFor="export-mfa" className="label-caps block text-muted">Código do autenticador</label>
-            <input id="export-mfa" name="mfa_code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required
-              className="block min-h-12 w-full rounded-xl border border-border-strong bg-surface px-3.5" />
             <button type="submit" className={buttonClasses("secondary")}>Baixar exportação</button>
             <p className="text-xs text-muted">Inclui observações privadas do professor. Trate o arquivo com cuidado.</p>
           </form>
@@ -54,7 +51,6 @@ export async function TabHistorico({ studentId, student, supabase, tz }: TabProp
             <ActionForm action={anonymizeAction.bind(null, studentId)} submitLabel="Anonimizar" submitVariant="danger">
               <TextField name="reason" label="Motivo / referência da solicitação" required />
               <TextField name="confirm" label="Digite ANONIMIZAR" required autoComplete="off" />
-              <TextField name="mfa_code" label="Código do autenticador" inputMode="numeric" maxLength={6} required />
             </ActionForm>
           </Disclosure>
         ) : student.anonymized_at ? <Alert tone="neutral">Cadastro anonimizado.</Alert>

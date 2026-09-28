@@ -68,7 +68,7 @@ export async function proxy(request: NextRequest) {
   // Renova a sessão (tokens rotacionados) antes de renderizar.
   const pending: { name: string; value: string; options: Parameters<typeof hardenCookie>[0] }[] = [];
   const pendingHeaders: Record<string, string> = {};
-  type Claims = { sub?: string; aal?: string };
+  type Claims = { sub?: string };
   let claims: Claims | null = null;
   if (process.env.SUPABASE_URL && process.env.SUPABASE_PUBLISHABLE_KEY) {
     const supabase = createServerClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
@@ -101,11 +101,6 @@ export async function proxy(request: NextRequest) {
     url.pathname = "/entrar";
     url.search = "";
     url.searchParams.set("next", pathname);
-    res = NextResponse.redirect(url);
-  } else if (pathname.startsWith("/professor") && claims?.aal !== "aal2") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/mfa";
-    url.search = "";
     res = NextResponse.redirect(url);
   } else {
     const requestHeaders = new Headers(request.headers);

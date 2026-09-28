@@ -1,15 +1,11 @@
 "use server";
 
-import { actionAuth, isAuthed } from "@/lib/auth";
 import { allValues, opt, runRpc, str } from "@/lib/actions";
 import type { ActionState } from "@/lib/errors";
-import { stepUpWithCode } from "@/lib/mfa";
 import { normalizePixKey, type PixKeyType } from "@/lib/pix/keys";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 export async function updatePixAction(_: ActionState, fd: FormData): Promise<ActionState> {
   const values = allValues(fd);
-  delete values.mfa_code;
   const type = str(fd, "key_type") as PixKeyType;
   const errors: Record<string, string> = {};
   if (!["cpf", "cnpj", "email", "phone", "evp"].includes(type)) errors.key_type = "Escolha o tipo de chave.";
@@ -17,10 +13,6 @@ export async function updatePixAction(_: ActionState, fd: FormData): Promise<Act
   if (str(fd, "receiver_name").length < 2) errors.receiver_name = "Informe o nome do recebedor.";
   if (str(fd, "city").length < 2) errors.city = "Informe a cidade.";
   if (Object.keys(errors).length) return { ok: false, fieldErrors: errors, values };
-  const auth = await actionAuth("coach");
-  if (!isAuthed(auth)) return auth;
-  const step = await stepUpWithCode(auth.supabase as unknown as SupabaseClient, str(fd, "mfa_code"));
-  if (step) return { ...step, values };
   return runRpc("coach", "update_pix_settings", {
     p_receiver_name: str(fd, "receiver_name"), p_key_type: type, p_pix_key: str(fd, "pix_key"), p_city: str(fd, "city"),
     p_brcode_enabled: fd.get("brcode_enabled") === "on",
@@ -65,17 +57,4 @@ export async function privacySettingsAction(_: ActionState, fd: FormData): Promi
 export async function resolvePrivacyAction(requestId: string, _: ActionState, fd: FormData): Promise<ActionState> {
   return runRpc("coach", "resolve_privacy_request", { p_request_id: requestId, p_status: str(fd, "status"), p_resolution: opt(fd, "resolution") },
     { values: allValues(fd), success: "Solicitação atualizada." });
-}
-
-export async function removeFactorAction(factorId: string, _: ActionState, fd: FormData): Promise<ActionState> {
-  const auth = await actionAuth("coach");
-  if (!isAuthed(auth)) return auth;
-  const sb = auth.supabase as unknown as SupabaseClient;
-  const { data } = await sb.auth.mfa.listFactors();
-  if ((data?.totp ?? []).length <= 1) return { ok: false, message: "Mantenha ao menos um autenticador ativo." };
-  const step = await stepUpWithCode(sb, str(fd, "mfa_code"));
-  if (step) return step;
-  const { error } = await sb.auth.mfa.unenroll({ factorId });
-  if (error) return { ok: false, message: "Não foi possível remover o autenticador." };
-  return { ok: true, message: "Autenticador removido." };
 }

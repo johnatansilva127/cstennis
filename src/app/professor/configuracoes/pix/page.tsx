@@ -23,7 +23,8 @@ export default async function PixSettingsPage() {
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
           <CardHeader title="Recebedor" description={pix ? `Atualizado em ${formatDateTime(pix.updated_at, org.timezone)}` : "Ainda não configurado"} />
-          <ActionForm action={updatePixAction} submitLabel="Salvar dados Pix" pendingLabel="Salvando…">
+          <ActionForm action={updatePixAction} submitLabel="Salvar dados Pix" pendingLabel="Salvando…"
+            confirm="Salvar os dados Pix? Os alunos passam a pagar para esta chave. A alteração fica registrada e gera um aviso.">
             <TextField name="receiver_name" label="Nome do recebedor (como aparece no banco)" defaultValue={pix?.receiver_name} required maxLength={60} />
             <div className="grid gap-4 sm:grid-cols-2">
               <SelectField name="key_type" label="Tipo de chave" defaultValue={pix?.key_type ?? "evp"} required
@@ -34,8 +35,6 @@ export default async function PixSettingsPage() {
             <CheckboxField name="brcode_enabled" defaultChecked={pix?.brcode_enabled}
               label="Exibir QR Code e Pix Copia e Cola aos pagadores"
               hint="Ative somente depois de testar o código de teste ao lado no app do seu banco." />
-            <TextField name="mfa_code" label="Código do autenticador" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required
-              hint="Alterar dados de recebimento exige confirmação em duas etapas. A mudança é auditada." />
           </ActionForm>
         </Card>
         <Card>

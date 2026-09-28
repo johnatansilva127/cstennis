@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import sharp from "sharp";
 import { contextOptions, loginCoach, todaySaoPaulo, watchErrors, resetRateLimits } from "./helpers";
 
@@ -6,6 +6,17 @@ test.beforeEach(resetRateLimits);
 test.describe.configure({ timeout: 300_000 });
 
 const NEW_PASSWORD = "Aluno-E2E-2026-teste";
+
+/**
+ * Clica e espera a Server Action terminar. A mensagem de sucesso não serve de sinal: fica num cartão que sai da
+ * tela quando a página atualiza, e o botão muda de nome enquanto a ação está pendente.
+ */
+async function clickAndWaitAction(page: Page, button: Locator) {
+  await Promise.all([
+    page.waitForResponse((r) => r.request().method() === "POST" && "next-action" in r.request().headers()),
+    button.click(),
+  ]);
+}
 
 /** Card (ancestral mais próximo) que contém o texto e um botão com o nome dado. */
 function cardWith(page: Page, text: string, button: string) {
@@ -68,9 +79,8 @@ test("jornada completa: cadastro, convite, pedido de vaga, aprovação, comprova
   // 5. Professor aprova (revalida capacidade/conflitos no servidor).
   await coach.goto("/professor/pedidos");
   const request = cardWith(coach, name, "Aprovar");
-  await request.getByRole("button", { name: "Aprovar" }).click();
-  // A mensagem de sucesso fica no cartão, que sai da lista quando a página atualiza.
-  await expect(cardWith(coach, name, "Aprovar")).toHaveCount(0);
+  await clickAndWaitAction(coach, request.getByRole("button", { name: "Aprovar" }));
+  await expect(coach.getByRole("listitem").filter({ hasText: name }).filter({ hasText: "Aprovado" })).toBeVisible();
 
   // 6. A aula aparece para o aluno.
   await student.goto("/app/aulas");
@@ -101,8 +111,7 @@ test("jornada completa: cadastro, convite, pedido de vaga, aprovação, comprova
   // 9. Professor confere e aprova; o aluno vê a confirmação.
   await coach.goto("/professor/financeiro/comprovantes");
   const proof = cardWith(coach, name, "Aprovar: crédito conferido");
-  await proof.getByRole("button", { name: "Aprovar: crédito conferido" }).click();
-  await expect(cardWith(coach, name, "Aprovar: crédito conferido")).toHaveCount(0);
+  await clickAndWaitAction(coach, proof.getByRole("button", { name: "Aprovar: crédito conferido" }));
   await student.reload();
   await expect(student.getByText("Pagamento confirmado pelo professor")).toBeVisible();
 

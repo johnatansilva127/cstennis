@@ -9,7 +9,7 @@ export type ActionState<T = unknown> = {
   values?: Record<string, string>;
   data?: T;
   redirectTo?: string;
-  /** Código de erro de negócio (ex.: CS428 = precisa confirmar MFA). */
+  /** Código de erro de negócio (ex.: CS409 = conflito). */
   code?: string;
 };
 

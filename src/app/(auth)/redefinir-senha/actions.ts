@@ -24,5 +24,5 @@ export async function setPasswordAction(_: ActionState, formData: FormData): Pro
   await supabase.auth.signOut({ scope: "others" });
   const { data: ctx } = await supabase.rpc("my_context");
   const isCoach = (ctx as { is_coach?: boolean } | null)?.is_coach;
-  return { ok: true, message: "Senha atualizada.", redirectTo: isCoach ? "/mfa" : "/app" };
+  return { ok: true, message: "Senha atualizada.", redirectTo: isCoach ? "/professor" : "/app" };
 }

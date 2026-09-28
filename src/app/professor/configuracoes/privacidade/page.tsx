@@ -33,7 +33,7 @@ export default async function PrivacySettingsPage() {
               defaultValue={o?.proof_retention_days ?? ""} hint="Vazio = manter. O registro do pagamento continua existindo; só o arquivo é removido." />
           </ActionForm>
           <Alert tone="info" className="mt-4">
-            Exportação e anonimização de um aluno ficam na aba “Histórico” da ficha do aluno e exigem confirmação em duas etapas.
+            Exportação e anonimização de um aluno ficam na aba “Histórico” da ficha do aluno e ficam registradas na auditoria.
             Não definimos prazos legais de retenção: decida com orientação adequada.
           </Alert>
         </Card>

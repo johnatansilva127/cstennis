@@ -1,13 +1,10 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { actionAuth, isAuthed } from "@/lib/auth";
 import { allValues, runRpc, str } from "@/lib/actions";
 import type { ActionState } from "@/lib/errors";
 import { parseBRLToCents } from "@/lib/money";
 import { isValidDate } from "@/lib/dates";
-import { stepUpWithCode } from "@/lib/mfa";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 export async function generateInvoicesAction(_: ActionState): Promise<ActionState> {
   const res = await runRpc<number>("coach", "generate_invoices_now", {});
@@ -64,12 +61,7 @@ export async function cancelInvoiceAction(invoiceId: string, _: ActionState, fd:
 
 export async function reversePaymentAction(paymentId: string, _: ActionState, fd: FormData): Promise<ActionState> {
   const values = allValues(fd);
-  delete values.mfa_code;
   if (str(fd, "reason").length < 5) return { ok: false, fieldErrors: { reason: "Descreva o motivo do estorno." }, values };
-  const auth = await actionAuth("coach");
-  if (!isAuthed(auth)) return auth;
-  const step = await stepUpWithCode(auth.supabase as unknown as SupabaseClient, str(fd, "mfa_code"));
-  if (step) return { ...step, values };
   return runRpc("coach", "reverse_payment", { p_payment_id: paymentId, p_reason: str(fd, "reason") },
     { values, success: "Estorno registrado. A cobrança voltou a ficar em aberto." });
 }

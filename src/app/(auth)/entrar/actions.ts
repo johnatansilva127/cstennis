@@ -47,6 +47,6 @@ export async function signInAction(_: ActionState, formData: FormData): Promise<
     return { ok: false, values, message: GENERIC };
   }
   (await cookies()).set(THEME_COOKIE, context.theme, { ...sessionCookieOptions(), maxAge: 60 * 60 * 24 * 365 });
-  if (context.is_coach) return { ok: true, redirectTo: `/mfa?next=${encodeURIComponent(safeNext(parsed.data.next, "/professor"))}` };
+  if (context.is_coach) return { ok: true, redirectTo: safeNext(parsed.data.next?.startsWith("/professor") ? parsed.data.next : undefined, "/professor") };
   return { ok: true, redirectTo: safeNext(parsed.data.next?.startsWith("/app") ? parsed.data.next : undefined, "/app") };
 }

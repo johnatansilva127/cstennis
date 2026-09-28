@@ -47,8 +47,8 @@ export const getUserContext = cache(async (): Promise<UserContext | null> => {
 export async function requireCoach() {
   const ctx = await getUserContext();
   if (!ctx) redirect("/entrar");
-  if (!ctx.is_coach) redirect("/acesso-negado");
-  if (ctx.aal !== "aal2") redirect("/mfa");
+  // Aluno/responsável na área do professor volta ao app (sem vínculo, o app leva a /acesso-negado).
+  if (!ctx.is_coach) redirect("/app");
   const org = ctx.organizations.find((o) => o.role === "coach");
   if (!org) redirect("/acesso-negado");
   return { supabase: await getSupabase(), ctx, org };
@@ -77,8 +77,8 @@ type AuthedAction = { supabase: Awaited<ReturnType<typeof getSupabase>>; ctx: Us
 export async function actionAuth(kind: "coach" | "participant" | "any"): Promise<AuthedAction | ActionState> {
   const ctx = await getUserContext();
   if (!ctx) return { ok: false, message: "Sessão expirada. Entre novamente.", redirectTo: "/entrar" };
-  if (kind === "coach" && (!ctx.is_coach || ctx.aal !== "aal2")) {
-    return { ok: false, message: "Acesso restrito ao professor com verificação em duas etapas." };
+  if (kind === "coach" && !ctx.is_coach) {
+    return { ok: false, message: "Acesso restrito ao professor." };
   }
   if (kind === "participant" && ctx.is_coach) {
     return { ok: false, message: "Ação disponível apenas para alunos e responsáveis." };
