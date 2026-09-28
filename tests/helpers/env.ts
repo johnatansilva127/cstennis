@@ -5,7 +5,6 @@ export type TestEnv = {
   anonKey: string;
   serviceKey: string;
   dbUrl: string;
-  mailpitUrl: string;
 };
 
 let cached: TestEnv | null = null;
@@ -20,7 +19,6 @@ export function testEnv(): TestEnv {
   let anonKey = process.env.TEST_SUPABASE_ANON_KEY;
   let serviceKey = process.env.TEST_SUPABASE_SERVICE_ROLE_KEY;
   let dbUrl = process.env.TEST_DATABASE_URL;
-  let mailpitUrl = process.env.TEST_MAILPIT_URL;
   if (!url || !anonKey || !serviceKey || !dbUrl) {
     const out = execSync("npx supabase status -o env", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
     const vars: Record<string, string> = {};
@@ -32,7 +30,6 @@ export function testEnv(): TestEnv {
     anonKey = vars.ANON_KEY;
     serviceKey = vars.SERVICE_ROLE_KEY;
     dbUrl = vars.DB_URL;
-    mailpitUrl = vars.MAILPIT_URL ?? vars.INBUCKET_URL;
   }
   if (!url || !anonKey || !serviceKey || !dbUrl) {
     throw new Error("Supabase local não encontrado. Rode `npx supabase start`.");
@@ -41,6 +38,6 @@ export function testEnv(): TestEnv {
   if (!["127.0.0.1", "localhost"].includes(host)) {
     throw new Error(`Recusando executar testes contra ${host}: use apenas o ambiente local.`);
   }
-  cached = { url, anonKey, serviceKey, dbUrl, mailpitUrl: mailpitUrl ?? "http://127.0.0.1:54324" };
+  cached = { url, anonKey, serviceKey, dbUrl };
   return cached;
 }

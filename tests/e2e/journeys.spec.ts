@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import sharp from "sharp";
-import { contextOptions, latestEmailCode, loginCoach, todaySaoPaulo, watchErrors, resetRateLimits } from "./helpers";
+import { contextOptions, loginCoach, todaySaoPaulo, watchErrors, resetRateLimits } from "./helpers";
 
 test.beforeEach(resetRateLimits);
 test.describe.configure({ timeout: 300_000 });
@@ -33,22 +33,17 @@ test("jornada completa: cadastro, convite, pedido de vaga, aprovação, comprova
   await expect(coach.locator("h1")).toHaveText(name);
   const studentPath = new URL(coach.url()).pathname;
 
-  // 2. Aluno aceita o convite em outro navegador (código por e-mail + senha).
+  // 2. Aluno ativa o convite em outro navegador criando a própria senha (sem e-mail).
   const studentCtx = await browser.newContext(contextOptions(info));
   const student = await studentCtx.newPage();
   const studentErrors = watchErrors(student);
-  const sentAt = Date.now() - 1000;
   await student.goto(inviteUrl);
   await expect(student.getByText(/Você foi convidado/)).toBeVisible();
   await expect(student, "o token sai da barra de endereço").toHaveURL(/\/convite$/);
-  await student.getByRole("button", { name: "Enviar código por e-mail" }).click();
-  const code = await latestEmailCode(email, sentAt);
-  await student.getByLabel(/^Código recebido por e-mail/).fill(code);
-  await student.getByRole("button", { name: "Confirmar e ativar acesso" }).click();
-  await student.waitForURL(/\/definir-senha/);
+  await expect(student.getByText(email)).toBeVisible();
   await student.getByLabel(/^Senha/).fill(NEW_PASSWORD);
   await student.getByLabel(/^Repita a senha/).fill(NEW_PASSWORD);
-  await student.getByRole("button", { name: "Criar senha e continuar" }).click();
+  await student.getByRole("button", { name: "Criar senha e entrar" }).click();
   await student.waitForURL(/\/app$/);
   await expect(student.locator("h1").first()).toBeVisible();
 
@@ -125,4 +120,35 @@ test("chamada de uma aula passada é salva pelo professor", async ({ page }) => 
   await page.getByRole("button", { name: "Salvar chamada" }).click();
   await expect(page.getByText("Chamada salva.")).toBeVisible();
   expect(errors, errors.join("\n")).toEqual([]);
+});
+
+test("convite para e-mail que já tem conta pede a senha atual", async ({ page: coach, browser }, info) => {
+  test.skip(info.project.name !== "desktop", "Independe do tamanho de tela.");
+  const { createUser, PASSWORD } = await import("../helpers/db");
+  const suffix = Date.now().toString(36);
+  const email = `existente-${suffix}@demo.cstennis.test`;
+  await createUser(email);
+
+  await loginCoach(coach);
+  await coach.goto("/professor/alunos/novo");
+  await coach.getByLabel(/^Nome completo/).fill(`Aluno Existente ${suffix}`);
+  await coach.getByLabel(/^E-mail/).fill(email);
+  await coach.getByLabel(/Gerar convite de acesso para o aluno/).check();
+  await coach.getByRole("button", { name: "Cadastrar aluno" }).click();
+  const inviteUrl = await coach.locator("#invite-url").inputValue();
+
+  const ctx = await browser.newContext(contextOptions(info));
+  const student = await ctx.newPage();
+  await student.goto(inviteUrl);
+  await student.getByLabel(/^Senha/).fill("Qualquer-Senha-2026");
+  await student.getByLabel(/^Repita a senha/).fill("Qualquer-Senha-2026");
+  await student.getByRole("button", { name: "Criar senha e entrar" }).click();
+  await expect(student.getByText(/Já existe uma conta com o e-mail/)).toBeVisible();
+  await student.getByLabel(/^Senha/).fill("Errada-Senha-2026");
+  await student.getByRole("button", { name: "Entrar e aceitar convite" }).click();
+  await expect(student.getByText("Senha incorreta.")).toBeVisible();
+  await student.getByLabel(/^Senha/).fill(PASSWORD);
+  await student.getByRole("button", { name: "Entrar e aceitar convite" }).click();
+  await student.waitForURL(/\/app$/);
+  await ctx.close();
 });

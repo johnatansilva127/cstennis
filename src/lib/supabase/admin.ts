@@ -13,11 +13,3 @@ export function createSupabaseAdminClient() {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
 }
-
-/** Cliente anônimo sem sessão (ex.: envio de código OTP de convite). */
-export function createSupabaseAnonClient() {
-  const e = env();
-  return createClient(e.SUPABASE_URL, e.SUPABASE_PUBLISHABLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
-}

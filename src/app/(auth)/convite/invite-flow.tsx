@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Alert } from "@/components/ui/status";
 import { buttonClasses } from "@/components/ui/button";
-import { FieldShell } from "@/components/ui/form";
+import { ActionForm, TextField } from "@/components/ui/form";
 import type { ActionState } from "@/lib/errors";
 import {
-  acceptInviteSignedInAction, previewInviteAction, sendInviteCodeAction, signOutForInviteAction, verifyInviteCodeAction,
+  acceptInviteSignedInAction, activateInviteAction, loginAndAcceptInviteAction, previewInviteAction, signOutForInviteAction,
   type InvitePreview,
 } from "./actions";
 
@@ -24,9 +25,8 @@ export function InviteFlow() {
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
   const [preview, setPreview] = useState<InvitePreview | null>(null);
-  const [step, setStep] = useState<"start" | "code">("start");
+  const [step, setStep] = useState<"create" | "login">("create");
   const [feedback, setFeedback] = useState<ActionState | null>(null);
-  const [code, setCode] = useState("");
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -68,8 +68,7 @@ export function InviteFlow() {
     <div className="space-y-4">
       <p className="text-sm text-muted">
         Você foi convidado(a) por <strong className="text-text">{preview.organization_name}</strong> para acessar o CS Tennis
-        como <strong className="text-text">{role}</strong>. O convite é para o e-mail{" "}
-        <strong className="text-text">{preview.masked_email}</strong>.
+        como <strong className="text-text">{role}</strong>.
       </p>
 
       <div aria-live="polite">
@@ -96,39 +95,30 @@ export function InviteFlow() {
             Sair desta conta
           </button>
         </div>
-      ) : step === "start" ? (
+      ) : step === "create" ? (
         <div className="space-y-3">
-          <p className="text-sm text-muted">Para confirmar que o e-mail é seu, enviaremos um código de 6 dígitos.</p>
-          <button type="button" disabled={pending} className={buttonClasses("primary", "lg", true)}
-            onClick={() => run(async () => {
-              const res = await sendInviteCodeAction(token!);
-              if (res.ok) setStep("code");
-              return res;
-            })}>
-            {pending ? "Enviando…" : "Enviar código por e-mail"}
-          </button>
+          <p className="text-sm text-muted">
+            Seu login será o e-mail <strong className="text-text">{preview.email}</strong>. Crie uma senha para entrar.
+          </p>
+          <ActionForm action={activateInviteAction.bind(null, token!)} submitLabel="Criar senha e entrar" pendingLabel="Ativando…"
+            onSuccess={(s) => {
+              if ((s.data as { existingAccount?: boolean } | undefined)?.existingAccount) setStep("login");
+            }}>
+            <TextField name="password" type="password" label="Senha" autoComplete="new-password" required
+              hint="Mínimo de 10 caracteres, com letras e números." />
+            <TextField name="confirm" type="password" label="Repita a senha" autoComplete="new-password" required />
+          </ActionForm>
         </div>
       ) : (
-        <form className="space-y-4" onSubmit={(e) => {
-          e.preventDefault();
-          if (!pending) run(() => verifyInviteCodeAction(token!, code));
-        }}>
-          <FieldShell id="invite-code" label="Código recebido por e-mail" error={feedback?.fieldErrors?.code}
-            hint="Confira também a caixa de spam.">
-            <input id="invite-code" name="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required
-              value={code} onChange={(e) => setCode(e.target.value)}
-              aria-invalid={feedback?.fieldErrors?.code ? true : undefined}
-              aria-describedby={feedback?.fieldErrors?.code ? "invite-code-error" : "invite-code-hint"}
-              className="block min-h-12 w-full rounded-xl border border-border-strong bg-surface px-3.5 text-center font-mono text-2xl tracking-[0.5em] text-text" />
-          </FieldShell>
-          <button type="submit" disabled={pending} className={buttonClasses("primary", "lg", true)}>
-            {pending ? "Verificando…" : "Confirmar e ativar acesso"}
-          </button>
-          <button type="button" disabled={pending} className="min-h-11 w-full text-sm font-semibold text-link"
-            onClick={() => run(() => sendInviteCodeAction(token!))}>
-            Reenviar código
-          </button>
-        </form>
+        <div className="space-y-3">
+          <Alert tone="info">
+            Já existe uma conta com o e-mail {preview.email}. Digite a senha que você já usa para aceitar o convite.
+          </Alert>
+          <ActionForm action={loginAndAcceptInviteAction.bind(null, token!)} submitLabel="Entrar e aceitar convite" pendingLabel="Entrando…">
+            <TextField name="password" type="password" label="Senha" autoComplete="current-password" required />
+          </ActionForm>
+          <Link href="/recuperar-senha" className="inline-flex min-h-11 items-center text-sm font-semibold text-link">Esqueci a senha</Link>
+        </div>
       )}
     </div>
   );

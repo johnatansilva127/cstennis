@@ -72,24 +72,6 @@ export async function localSql<T extends Record<string, unknown>>(text: string, 
   }
 }
 
-/** Último código de 6 dígitos enviado ao e-mail (Mailpit local). */
-export async function latestEmailCode(email: string, after = 0): Promise<string> {
-  const { testEnv } = await import("../helpers/env");
-  const base = testEnv().mailpitUrl;
-  for (let i = 0; i < 40; i++) {
-    const res = await fetch(`${base}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}&limit=5`);
-    const body = (await res.json()) as { messages?: { ID: string; Created: string }[] };
-    const msg = (body.messages ?? []).find((m) => new Date(m.Created).getTime() >= after);
-    if (msg) {
-      const full = (await (await fetch(`${base}/api/v1/message/${msg.ID}`)).json()) as { Text?: string; HTML?: string };
-      const m = `${full.Text ?? ""} ${full.HTML ?? ""}`.match(/\b(\d{6})\b/);
-      if (m) return m[1];
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Nenhum código recebido para ${email}`);
-}
-
 /** Data de hoje (YYYY-MM-DD) no fuso da escola. */
 export function todaySaoPaulo(offsetDays = 0) {
   const d = new Date(Date.now() + offsetDays * 86400_000);
@@ -108,22 +90,4 @@ export function contextOptions(info: TestInfo): BrowserContextOptions {
 /** Zera os contadores de tentativas do banco LOCAL (higiene entre cenários). */
 export async function resetRateLimits() {
   await localSql("delete from private.rate_limits");
-}
-
-/** Último link de redefinição de senha enviado ao e-mail (Mailpit local). */
-export async function latestEmailLink(email: string, after = 0): Promise<string> {
-  const { testEnv } = await import("../helpers/env");
-  const base = testEnv().mailpitUrl;
-  for (let i = 0; i < 40; i++) {
-    const res = await fetch(`${base}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}&limit=5`);
-    const body = (await res.json()) as { messages?: { ID: string; Created: string }[] };
-    const msg = (body.messages ?? []).find((m) => new Date(m.Created).getTime() >= after);
-    if (msg) {
-      const full = (await (await fetch(`${base}/api/v1/message/${msg.ID}`)).json()) as { HTML?: string };
-      const m = (full.HTML ?? "").match(/href="([^"]+\/auth\/confirm[^"]+)"/);
-      if (m) return m[1].replace(/&amp;/g, "&");
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Nenhum link recebido para ${email}`);
 }

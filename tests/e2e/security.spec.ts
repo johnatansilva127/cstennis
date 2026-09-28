@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { creds, latestEmailLink, localSql, login, resetRateLimits, watchErrors } from "./helpers";
+import { contextOptions, creds, localSql, login, loginCoach, resetRateLimits, watchErrors } from "./helpers";
 
 test.describe.configure({ timeout: 180_000 });
 test.beforeEach(resetRateLimits);
@@ -152,19 +152,25 @@ test("login: limite de tentativas bloqueia força bruta", async ({ page }, info)
   await resetRateLimits();
 });
 
-test("recuperação de senha: link por e-mail, uso único, e nova senha funciona", async ({ page, context }, info) => {
+test("nova senha: professor gera link, aluno redefine; link é de uso único e auditado", async ({ page: coach, browser }, info) => {
   test.skip(info.project.name !== "desktop", "Independe do tamanho de tela.");
   const c = creds();
   const email = c.adults[2];
   const temporary = "Temporaria-E2E-2026";
-  const since = Date.now() - 1000;
-  await page.goto("/recuperar-senha");
-  await page.getByLabel(/^E-mail/).fill(email);
-  await page.getByRole("button", { name: "Enviar link" }).click();
-  await expect(page.getByText(/Se houver uma conta com este e-mail/)).toBeVisible();
-  const link = await latestEmailLink(email, since);
-  expect(new URL(link).pathname).toBe("/auth/confirm");
+  const [row] = await localSql<{ student_id: string }>(
+    `select l.student_id from public.student_user_links l join auth.users u on u.id = l.user_id
+      where lower(u.email) = lower($1) and l.revoked_at is null`, [email]);
 
+  await loginCoach(coach);
+  await coach.goto(`/professor/alunos/${row.student_id}`);
+  await coach.getByRole("button", { name: "Gerar link de nova senha" }).click();
+  const link = await coach.locator("#password-url").inputValue();
+  expect(new URL(link).pathname).toBe("/auth/confirm");
+  const audit = await localSql("select 1 from public.audit_events where action = 'password_link.create' and entity_id = $1", [row.student_id]);
+  expect(audit.length).toBeGreaterThan(0);
+
+  const ctx = await browser.newContext(contextOptions(info));
+  const page = await ctx.newPage();
   await page.goto(link);
   await page.waitForURL(/\/redefinir-senha/);
   await page.getByLabel(/^Nova senha/).fill(temporary);
@@ -173,7 +179,7 @@ test("recuperação de senha: link por e-mail, uso único, e nova senha funciona
   await page.waitForURL(/\/app$/);
 
   // O mesmo link não funciona de novo.
-  await context.clearCookies();
+  await ctx.clearCookies();
   await page.goto(link);
   await expect(page).toHaveURL(/\/recuperar-senha\?erro=link/);
 
@@ -188,4 +194,13 @@ test("recuperação de senha: link por e-mail, uso único, e nova senha funciona
   await form.getByLabel(/^Repita a nova senha/).fill(c.password);
   await form.getByRole("button", { name: "Trocar senha" }).click();
   await expect(page.getByText(/Senha alterada/)).toBeVisible();
+  await ctx.close();
+});
+
+test("esqueci a senha orienta a pedir o link ao professor", async ({ page }) => {
+  await page.goto("/recuperar-senha");
+  await expect(page.getByText(/Peça ao professor um link/)).toBeVisible();
+  await expect(page.getByLabel(/^E-mail/)).toHaveCount(0);
+  await page.goto("/recuperar-senha?erro=link");
+  await expect(page.getByText(/inválido, já foi usado ou expirou/)).toBeVisible();
 });

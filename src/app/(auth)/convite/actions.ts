@@ -2,9 +2,10 @@
 
 import { cookies } from "next/headers";
 import { getSupabase } from "@/lib/auth";
-import type { ActionState } from "@/lib/errors";
+import { logServerError, type ActionState } from "@/lib/errors";
+import { passwordProblem } from "@/lib/password";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { createSupabaseAdminClient, createSupabaseAnonClient } from "@/lib/supabase/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { THEME_COOKIE } from "@/lib/theme";
 import { sessionCookieOptions } from "@/lib/supabase/cookies";
 
@@ -15,6 +16,8 @@ export type InvitePreview = {
   kind?: "student" | "guardian";
   organization_name?: string;
   masked_email?: string;
+  /** E-mail do convite (login); só quando o convite é válido. */
+  email?: string;
   expires_at?: string;
   session?: { signedIn: boolean; matches: boolean; email?: string };
 };
@@ -26,38 +29,19 @@ export async function previewInviteAction(token: string): Promise<InvitePreview>
   const { data, error } = await admin.rpc("invitation_preview", { p_token: token });
   if (error || !data) return { status: "invalid" };
   const preview = data as InvitePreview;
+  if (preview.status === "valid") {
+    const { data: email } = await admin.rpc("invitation_email", { p_token: token });
+    preview.email = email ?? undefined;
+  }
   const supabase = await getSupabase();
   const { data: claims } = await supabase.auth.getClaims();
   if (claims?.claims?.sub) {
-    const { data: email } = await admin.rpc("invitation_email", { p_token: token });
     const userEmail = String(claims.claims.email ?? "").toLowerCase();
-    preview.session = { signedIn: true, matches: !!email && email === userEmail, email: userEmail };
+    preview.session = { signedIn: true, matches: !!preview.email && preview.email === userEmail, email: userEmail };
   } else {
     preview.session = { signedIn: false, matches: false };
   }
   return preview;
-}
-
-export async function sendInviteCodeAction(token: string): Promise<ActionState> {
-  const generic: ActionState = { ok: true, message: "Enviamos um código de 6 dígitos para o e-mail do convite. Ele expira em 15 minutos." };
-  if (!TOKEN_RE.test(token)) return { ok: false, message: "Convite inválido." };
-  const ip = await clientIp();
-  if (!(await rateLimit("invite:code:ip", ip, 10, 3600)) || !(await rateLimit("invite:code:token", token, 5, 3600))) {
-    return { ok: false, message: "Muitos envios. Aguarde alguns minutos antes de pedir outro código." };
-  }
-  const admin = createSupabaseAdminClient();
-  const { data: email, error } = await admin.rpc("invitation_email_for_code", { p_token: token });
-  if (error) return { ok: false, message: error.code?.startsWith("CS") ? error.message : "Não foi possível enviar o código." };
-  if (!email) return { ok: false, message: "Este convite não está mais válido." };
-  // Conta sem senha e já confirmada: só é acessível pelo código enviado ao
-  // próprio e-mail (prova de posse). Se já existir, é reutilizada.
-  await admin.auth.admin.createUser({ email, email_confirm: true, app_metadata: { needs_password: true } });
-  const anon = createSupabaseAnonClient();
-  const { error: otpError } = await anon.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-  if (otpError) {
-    return { ok: false, message: "Não foi possível enviar o código agora. Aguarde um minuto e tente de novo." };
-  }
-  return generic;
 }
 
 const ACCEPT_MESSAGES: Record<string, string> = {
@@ -81,26 +65,52 @@ async function acceptWithSession(token: string): Promise<ActionState> {
   if (error) return { ok: false, message: "Não foi possível aceitar o convite." };
   const result = data as { ok: boolean; code: string };
   if (!result.ok) return { ok: false, message: ACCEPT_MESSAGES[result.code] ?? "Não foi possível aceitar o convite." };
-  const { data: user } = await supabase.auth.getUser();
   (await cookies()).set(THEME_COOKIE, "system", { ...sessionCookieOptions(), maxAge: 60 * 60 * 24 * 365 });
-  const needsPassword = user.user?.app_metadata?.needs_password === true;
-  return { ok: true, message: "Convite aceito!", redirectTo: needsPassword ? "/definir-senha" : "/app" };
+  return { ok: true, message: "Convite aceito!", redirectTo: "/app" };
 }
 
-export async function verifyInviteCodeAction(token: string, code: string): Promise<ActionState> {
+const INVITE_GONE: ActionState = { ok: false, message: "Este convite não está mais válido." };
+
+async function signInAndAccept(token: string, email: string, password: string): Promise<ActionState> {
+  const supabase = await getSupabase();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { ok: false, fieldErrors: { password: "Senha incorreta." } };
+  return acceptWithSession(token);
+}
+
+/** Conta nova: o link secreto e de uso único é a prova do convite; a pessoa cria a senha aqui. */
+export async function activateInviteAction(token: string, _: ActionState, fd: FormData): Promise<ActionState> {
   if (!TOKEN_RE.test(token)) return { ok: false, message: "Convite inválido." };
-  const clean = code.replace(/\s/g, "");
-  if (!/^\d{6}$/.test(clean)) return { ok: false, fieldErrors: { code: "Digite os 6 números recebidos por e-mail." } };
-  if (!(await rateLimit("invite:verify", token, 10, 900))) {
+  const password = String(fd.get("password") ?? "");
+  const problem = passwordProblem(password, String(fd.get("confirm") ?? ""));
+  if (problem) return { ok: false, fieldErrors: { password: problem } };
+  if (!(await rateLimit("invite:activate:ip", await clientIp(), 20, 3600)) || !(await rateLimit("invite:activate", token, 10, 900))) {
     return { ok: false, message: "Muitas tentativas. Aguarde alguns minutos." };
   }
   const admin = createSupabaseAdminClient();
   const { data: email } = await admin.rpc("invitation_email", { p_token: token });
-  if (!email) return { ok: false, message: "Este convite não está mais válido." };
-  const supabase = await getSupabase();
-  const { error } = await supabase.auth.verifyOtp({ email, token: clean, type: "email" });
-  if (error) return { ok: false, fieldErrors: { code: "Código inválido ou expirado." } };
-  return acceptWithSession(token);
+  if (!email) return INVITE_GONE;
+  const { error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  if (error?.code === "email_exists") return { ok: true, data: { existingAccount: true } };
+  if (error?.code === "weak_password") return { ok: false, fieldErrors: { password: "Senha fraca. Escolha outra." } };
+  if (error) {
+    logServerError("invite:activate", error);
+    return { ok: false, message: "Não foi possível ativar o acesso agora. Tente de novo em instantes." };
+  }
+  return signInAndAccept(token, email, password);
+}
+
+/** E-mail que já tem conta: entra com a senha atual e aceita o convite. */
+export async function loginAndAcceptInviteAction(token: string, _: ActionState, fd: FormData): Promise<ActionState> {
+  if (!TOKEN_RE.test(token)) return { ok: false, message: "Convite inválido." };
+  const password = String(fd.get("password") ?? "");
+  if (!password) return { ok: false, fieldErrors: { password: "Digite sua senha." } };
+  if (!(await rateLimit("invite:login:ip", await clientIp(), 20, 3600)) || !(await rateLimit("invite:login", token, 5, 900))) {
+    return { ok: false, message: "Muitas tentativas. Aguarde alguns minutos." };
+  }
+  const { data: email } = await createSupabaseAdminClient().rpc("invitation_email", { p_token: token });
+  if (!email) return INVITE_GONE;
+  return signInAndAccept(token, email, password);
 }
 
 export async function acceptInviteSignedInAction(token: string): Promise<ActionState> {

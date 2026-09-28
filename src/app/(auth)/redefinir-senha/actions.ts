@@ -3,7 +3,6 @@
 import { getSupabase } from "@/lib/auth";
 import type { ActionState } from "@/lib/errors";
 import { passwordProblem } from "@/lib/password";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function setPasswordAction(_: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await getSupabase();
@@ -21,8 +20,6 @@ export async function setPasswordAction(_: ActionState, formData: FormData): Pro
         : "Não foi possível atualizar a senha. Solicite um novo link.";
     return { ok: false, fieldErrors: { password: msg } };
   }
-  // Conta criada por convite passa a ter senha própria.
-  await createSupabaseAdminClient().auth.admin.updateUserById(claims.claims.sub, { app_metadata: { needs_password: false } });
   // Encerra outras sessões abertas desta conta.
   await supabase.auth.signOut({ scope: "others" });
   const { data: ctx } = await supabase.rpc("my_context");
