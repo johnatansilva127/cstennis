@@ -1,7 +1,7 @@
 # Próximos passos: colocar o CS Tennis no ar
 
 Documento de passagem entre sessões. Qualquer nova conversa deve **ler este arquivo inteiro antes de agir**.
-Situação registrada em 27/09/2026 (segunda sessão do dia).
+Situação registrada em 28/09/2026.
 
 ## Onde estamos
 
@@ -10,10 +10,10 @@ Situação registrada em 27/09/2026 (segunda sessão do dia).
 | Código, banco, testes e documentação | ✅ Prontos, com o **acesso sem e-mail** (ver abaixo). Resultado da última rodada em [TESTES.md](TESTES.md) |
 | GitHub | ✅ `johnatansilva127/cstennis`, única branch `claude/tender-johnson-qpwm5m` (é a branch padrão e a de produção). Não existe `main` |
 | Supabase | ✅ Projeto **`cstennis`**, ref **`mejykeckbtomkbcpwcnp`**, São Paulo, na organização **Cs Tennis** (`bqsgmypgopxzszvaeove`, **plano Free**), em **outra conta** Supabase (a que está logada no Chrome do usuário). O conector MCP do Supabase **não enxerga** essa conta; usar o CLI (`npx supabase login` já feito neste computador) |
-| Banco de produção | ✅ 14 migrations aplicadas; 37 tabelas com RLS forçado, 2 jobs no pg_cron, bucket `payment-proofs` privado, advisors sem alerta crítico (os avisos de `SECURITY DEFINER` são do desenho, decisão D3) |
+| Banco de produção | ✅ 15 migrations aplicadas; 37 tabelas com RLS forçado, 2 jobs no pg_cron, bucket `payment-proofs` privado, advisors sem alerta crítico (os avisos de `SECURITY DEFINER` são do desenho, decisão D3) |
 | Auth de produção | ✅ Cadastro público desligado, senha mínima de 10 com letras e números, Site URL e Redirect URL do app, link de nova senha de 1 hora. Sem SMTP e sem modelos de e-mail (não são usados) |
 | Vercel | ✅ Projeto `cstennis-app` (`prj_yv8dFhzsfOm4wQD1bIwi0GwNtov1`, time `team_ECSBx6qOFJXVieuXDkEJgCqE`), domínio https://cstennis-app.vercel.app. Variáveis completas em **Production** (as chaves do Supabase só em Production, não em Preview) |
-| Conta do professor | ✅ Criada em 28/09/2026 com `scripts/bootstrap-coach.ts` (organização `CS Tennis`, fuso São Paulo). Acesso só com e-mail e senha (D18) |
+| Conta do professor | ✅ Criada em 28/09/2026 com `scripts/bootstrap-coach.ts` (organização `CS Tennis`, fuso São Paulo). Acesso só com e-mail e senha (D18). O professor já entrou; Pix, locais, horários e alunos ainda vazios |
 
 ## Decisões do usuário
 
@@ -53,8 +53,8 @@ Legenda: 🧑 = só o usuário pode fazer · 🤖 = o Claude faz.
      script no mesmo comando, sem gravar em arquivo nem mostrar na tela.
 3. 🧑 **Homologação**: seguir o [checklist](CHECKLIST_HOMOLOGACAO.md) com um aluno de teste (convite pelo WhatsApp,
    criar senha, gerar link de nova senha).
-4. 🤖 **Trocar os segredos** `RATE_LIMIT_SECRET` e `CRON_SECRET` na Vercel (os atuais apareceram no histórico de uma
-   sessão anterior) e fazer novo deploy.
+4. ✅ Segredos `RATE_LIMIT_SECRET` e `CRON_SECRET` trocados na Vercel em 28/09/2026 (valores gerados direto na área de
+   transferência do usuário e colados por ele; ninguém os viu) e novo deploy feito.
 5. 🧑 Decidir sobre a pausa do plano Free: manter o app em uso (o banco não pausa enquanto houver acesso) ou migrar
    para o Pro. O app antigo usava um "keep-alive" descrito em `MANUTENCAO-anti-pause.md`, na pasta do projeto no
    Google Drive do usuário.
