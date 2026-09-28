@@ -1,6 +1,5 @@
 import pg from "pg";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { Secret, TOTP } from "otpauth";
 import { randomUUID } from "node:crypto";
 import { testEnv } from "./env";
 
@@ -38,8 +37,6 @@ export type Session = {
   client: SupabaseClient;
   userId: string;
   email: string;
-  totpSecret?: string;
-  factorId?: string;
 };
 
 export async function signIn(email: string, password = PASSWORD): Promise<Session> {
@@ -49,48 +46,15 @@ export async function signIn(email: string, password = PASSWORD): Promise<Sessio
   return { client, userId: data.user.id, email };
 }
 
-const lastTotpWindow = new Map<string, number>();
-async function freshTotp(secret: string) {
-  // Evita reutilizar o mesmo código (mesmo segredo) na mesma janela de 30s.
-  const totp = new TOTP({ secret: Secret.fromBase32(secret) });
-  let window = Math.floor(Date.now() / 30000);
-  if (lastTotpWindow.get(secret) === window) {
-    await new Promise((r) => setTimeout(r, 30000 - (Date.now() % 30000) + 200));
-    window = Math.floor(Date.now() / 30000);
-  }
-  lastTotpWindow.set(secret, window);
-  return totp.generate();
-}
-
-export async function enrollTotp(session: Session) {
-  const { data, error } = await session.client.auth.mfa.enroll({ factorType: "totp", friendlyName: `t-${randomUUID().slice(0, 6)}` });
-  if (error) throw error;
-  session.totpSecret = data.totp.secret;
-  session.factorId = data.id;
-  await verifyTotp(session);
-}
-
-export async function verifyTotp(session: Session) {
-  const { data: ch, error: chErr } = await session.client.auth.mfa.challenge({ factorId: session.factorId! });
-  if (chErr) throw chErr;
-  const { error } = await session.client.auth.mfa.verify({
-    factorId: session.factorId!,
-    challengeId: ch.id,
-    code: await freshTotp(session.totpSecret!),
-  });
-  if (error) throw error;
-}
-
 export type Org = { orgId: string; coach: Session };
 
-/** Cria organização + professor com MFA (aal2), como o bootstrap administrativo. */
+/** Cria organização + professor (só senha, sem MFA — decisão D18), como o bootstrap administrativo. */
 export async function setupOrg(name = `Org ${randomUUID().slice(0, 6)}`): Promise<Org> {
   const email = uniqueEmail("coach");
   const user = await createUser(email);
   const { data: orgId, error } = await admin.rpc("bootstrap_coach", { p_org_name: name, p_user_id: user.id });
   if (error) throw error;
   const coach = await signIn(email);
-  await enrollTotp(coach);
   return { orgId: orgId as string, coach };
 }
 

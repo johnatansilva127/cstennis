@@ -214,14 +214,12 @@ describe("Financeiro (critérios 9 a 12)", () => {
     expect((await invoiceOf(s.studentId)).status).toBe("paid");
   });
 
-  it("step-up: ações sensíveis exigem MFA recente", async () => {
-    const old = Math.floor(Date.now() / 1000) - 3600;
-    const rows = await sql<{ recent: boolean; fresh: boolean }>(`
-      select (select set_config('request.jwt.claims', $1, true)) is not null and private.has_recent_mfa(900) as recent,
-             (select set_config('request.jwt.claims', $2, true)) is not null and private.has_recent_mfa(900) as fresh`,
-      [JSON.stringify({ aal: "aal2", amr: [{ method: "totp", timestamp: old }] }),
-       JSON.stringify({ aal: "aal2", amr: [{ method: "totp", timestamp: Math.floor(Date.now() / 1000) }] })]);
-    expect(rows[0]).toEqual({ recent: false, fresh: true });
+  it("step-up desativado (D18): ações sensíveis não exigem MFA", async () => {
+    // Antes lançava CS428 para sessão sem TOTP recente; agora não lança.
+    await expect(sql(
+      "select set_config('request.jwt.claims', $1, true), private.require_recent_mfa()",
+      [JSON.stringify({ aal: "aal1", amr: [{ method: "password", timestamp: Math.floor(Date.now() / 1000) }] })],
+    )).resolves.toHaveLength(1);
   });
 
   it("restrições valem pela API sem impedir regularização; liberação temporária expira (critério 12)", async () => {

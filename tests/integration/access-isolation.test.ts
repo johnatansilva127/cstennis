@@ -205,14 +205,14 @@ describe("Isolamento de dados (critérios 3, 4 e 5)", () => {
     expect(e2.code).toBe("CS404");
   });
 
-  it("professor sem MFA (aal1) não acessa dados", async () => {
+  it("professor só com senha (aal1, sem MFA — D18) acessa a própria organização", async () => {
     const { data: s } = await admin.auth.admin.getUserById(org.coach.userId);
     const { signIn } = await import("../helpers/db");
     const aal1 = await signIn(s.user!.email!);
+    const created = await rpc<{ student_id: string }>(aal1, "create_student", {
+      p_payload: { full_name: "Sem MFA", kind: "adult", email: `sem-mfa.${Date.now()}@example.test` } });
     const { data } = await aal1.client.from("students").select("id");
-    expect(data).toEqual([]);
-    const err = await rpcError(aal1, "create_student", { p_payload: { full_name: "X", kind: "adult", email: "x@example.test" } });
-    expect(err.code).toBe("CS403");
+    expect(data!.map((r) => r.id)).toContain(created.student_id);
     const ctx = await rpc<{ is_coach: boolean; aal: string }>(aal1, "my_context");
     expect(ctx).toMatchObject({ is_coach: true, aal: "aal1" });
   });
