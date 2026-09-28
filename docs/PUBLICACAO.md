@@ -30,25 +30,21 @@ Cada ambiente tem suas próprias chaves e segredos. Nunca reutilizar a chave de 
    - Desligar *Allow new users to sign up* (não existe cadastro público).
    - E-mail habilitado; confirmar e-mail ligado; *Secure email change* ligado.
    - Senha: mínimo 10 caracteres, letras e números. Se o plano permitir, ligar a proteção contra senhas vazadas.
-   - OTP de e-mail: 6 dígitos, expiração 900 s.
+   - Validade do link de nova senha (`otp_expiry`): 3600 s.
 4. **Authentication › URL Configuration**: *Site URL* = `APP_URL`; *Redirect URLs* = `APP_URL/auth/confirm`.
-5. **Authentication › Emails › SMTP**: configurar **SMTP próprio** (domínio com SPF/DKIM/DMARC). O e-mail
-   embutido do Supabase tem limites baixos e não serve para uso real. Sem isso, convites (código) e
-   recuperação de senha não chegam aos usuários.
-6. **Authentication › Emails › Templates** (copiar de `supabase/templates/`):
-   - *Magic Link* → assunto "Seu código de acesso CS Tennis", corpo de `magic_link.html` (mostra `{{ .Token }}`).
-   - *Reset Password* → assunto "Redefinição de senha CS Tennis", corpo de `recovery.html`.
-   - *Confirm signup* → `confirmation.html`.
-7. **Authentication › Multi-Factor**: TOTP habilitado (verificação e cadastro).
-8. **Authentication › Sessions** (recursos de plano pago): limite de sessão 30 dias e inatividade 7 dias, como
-   no ambiente local. JWT de 1 hora com rotação de refresh token (padrão).
-9. **Data API**: esquemas expostos somente `public` (e `graphql_public` se desejar); **nunca** `private`.
-10. **Database**: exigir SSL; restringir acesso de rede ao banco se o plano permitir.
-11. Conferir *Advisors › Security* sem alertas críticos e rodar no SQL Editor:
+5. **E-mails**: o acesso não envia e-mails (no convite a pessoa cria a senha; nova senha por link gerado pelo
+   professor). Não é preciso SMTP nem modelos de e-mail (decisão D17 em [DECISOES.md](DECISOES.md)).
+6. **Authentication › Multi-Factor**: TOTP habilitado (verificação e cadastro).
+7. **Authentication › Sessions** (recursos de plano pago): limite de sessão 30 dias e inatividade 7 dias, como
+   no ambiente local. JWT de 1 hora com rotação de refresh token (padrão). No plano Free não existe; o bloco
+   `[remotes.production.auth.sessions]` do `config.toml` evita que o `config push` tente aplicá-lo.
+8. **Data API**: esquemas expostos somente `public` (e `graphql_public` se desejar); **nunca** `private`.
+9. **Database**: exigir SSL; restringir acesso de rede ao banco se o plano permitir.
+10. Conferir *Advisors › Security* sem alertas críticos e rodar no SQL Editor:
     `select jobname, schedule from cron.job;` (dois jobs).
 
 Alternativa ao passo manual 3–8: `npx supabase config push` com uma seção `[remotes.<ambiente>]` no
-`config.toml` sobrescrevendo URLs e SMTP. Revise o diff antes de confirmar — o arquivo local usa URLs de
+`config.toml` sobrescrevendo URLs (o bloco `[remotes.production]` já existe para o projeto de produção). Revise o diff antes de confirmar — o arquivo local usa URLs de
 `localhost`.
 
 ## 2. Antimalware (ClamAV)

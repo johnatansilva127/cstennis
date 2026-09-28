@@ -33,11 +33,14 @@
 
 ### Professor esqueceu a senha
 
-"Esqueci a senha" na tela de entrada. Mesmo após redefinir, o acesso ao painel continua exigindo o TOTP.
+O responsável técnico gera um link de nova senha (vale 1 hora, uso único) e envia ao professor:
+`npx tsx --env-file=<arquivo com as variáveis de produção> scripts/coach-password-link.ts --email <e-mail>`.
+Mesmo após redefinir, o acesso ao painel continua exigindo o TOTP.
 
 ### Aluno/responsável sem acesso
 
-- Esqueceu a senha → "Esqueci a senha".
+- Esqueceu a senha → professor abre a ficha (aluno ou responsável) › **Gerar link de nova senha** e envia pelo
+  WhatsApp (vale 1 hora, uso único, registrado na auditoria).
 - Nunca ativou / convite expirou → professor gera **novo convite** na ficha do aluno (o anterior é cancelado).
 - Trocou de e-mail → professor corrige o e-mail no cadastro e gera novo convite.
 
@@ -67,7 +70,6 @@ e, se houver padrão, revogar o acesso e investigar.
 | `CRON_SECRET` | Gerar novo valor, atualizar no Vercel e redeploy |
 | `RATE_LIMIT_SECRET` | Gerar novo valor e redeploy (zera os contadores; sem impacto para usuários) |
 | Senha do banco | Redefinir no painel; atualizar onde for usada (CI de backup) |
-| Credenciais SMTP | Trocar no provedor e no painel do Supabase |
 
 Segredos ficam em cofre de senhas e nas variáveis da hospedagem — nunca no repositório, em chats ou em e-mails.
 

@@ -18,8 +18,8 @@ ser revogado a qualquer momento, com efeito imediato.
 
 ## Onde os dados ficam
 
-Supabase (banco, autenticação e arquivos) e Vercel (aplicação), mais o provedor de SMTP e o serviço de
-antimalware escolhidos. Recomenda-se região São Paulo e registrar esses provedores como operadores no aviso.
+Supabase (banco, autenticação e arquivos) e Vercel (aplicação), mais o serviço de
+antimalware escolhido. Recomenda-se região São Paulo e registrar esses provedores como operadores no aviso.
 
 ## Retenção configurável
 

@@ -12,7 +12,8 @@ permite. Legenda: ✅ permitido · 👁 somente leitura · ❌ negado · 🔐 ex
 | Cadastro de alunos, status, observações privadas | ✅ | 👁 dados básicos próprios (sem observações privadas) | 👁 dados básicos das crianças | ❌ |
 | Responsáveis e vínculos (criar, vincular, revogar) | ✅ | ❌ | ❌ (vê o próprio cadastro) | ❌ |
 | Convites (gerar, revogar) | ✅ | ❌ | ❌ | ❌ |
-| Aceitar convite | — | ✅ só com o e-mail do convite + código | ✅ idem | Pré-visualização mascarada |
+| Gerar link de nova senha (aluno/responsável com acesso ativo) | ✅ (auditado) | ❌ | ❌ | ❌ |
+| Aceitar convite | — | ✅ pelo link, criando a senha (ou com a senha atual, se o e-mail já tem conta) | ✅ idem | Pré-visualização (com o link) |
 | Locais e quadras | ✅ | 👁 | 👁 | ❌ |
 | Horários fixos (séries), agenda, indisponibilidade | ✅ | 👁 horários com vaga¹ | 👁 horários com vaga¹ | ❌ |
 | Matrícula direta, encerrar matrícula | ✅ | ❌ | ❌ | ❌ |

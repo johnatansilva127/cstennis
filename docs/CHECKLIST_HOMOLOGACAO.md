@@ -7,8 +7,7 @@ e quem executou. Nenhum dado real deve ser usado.
 ## Infraestrutura
 
 - [ ] Migrations aplicadas (`supabase db push`) e `select jobname from cron.job` retorna os dois jobs
-- [ ] Cadastro público desligado; Site URL e Redirect URL corretos; SMTP próprio enviando (SPF/DKIM ok)
-- [ ] Templates de e-mail (código e redefinição) em português com a marca
+- [ ] Cadastro público desligado; Site URL e Redirect URL corretos
 - [ ] TOTP habilitado; sessões com limite configurado (se o plano permitir)
 - [ ] Variáveis de ambiente do Vercel preenchidas por ambiente; nenhum segredo com prefixo `NEXT_PUBLIC_`
 - [ ] `https://<app>/api/health` responde; cabeçalhos: CSP, HSTS, `X-Frame-Options: DENY`, `nosniff`, `no-store`
@@ -39,7 +38,7 @@ e quem executou. Nenhum dado real deve ser usado.
 
 ## Aluno adulto
 
-- [ ] Ativar acesso pelo convite (código por e-mail, criar senha); link não funciona de novo
+- [ ] Ativar acesso pelo convite (criar a senha no link); link não funciona de novo
 - [ ] Início mostra a próxima aula em destaque; aulas e frequência corretas
 - [ ] Pedir vaga em horário com vaga; cancelar pedido pendente
 - [ ] Mensalidade: copiar chave Pix, QR Code (se habilitado), enviar comprovante JPEG/PNG/PDF até 10 MB
@@ -48,7 +47,7 @@ e quem executou. Nenhum dado real deve ser usado.
 - [ ] Com restrição: pedidos/módulos bloqueados com explicação, mas mensalidades e Pix acessíveis
 - [ ] Registrar jogo (sets, tie-break, match tie-break, W.O., desistência); estatísticas coerentes
 - [ ] Trocar tema (claro/escuro/sistema) e senha; exportar os próprios dados; abrir pedido de privacidade
-- [ ] Recuperar senha pelo e-mail
+- [ ] Nova senha: professor gera o link na ficha; vale 1 hora e só uma vez
 
 ## Responsável
 

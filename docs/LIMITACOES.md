@@ -4,10 +4,11 @@
 
 Enquanto estes itens não forem resolvidos, **o sistema não deve ser considerado pronto para produção**:
 
-1. **Infraestrutura não criada**: não há projeto Supabase de homologação/produção com estas migrations nem deploy
-   desta versão. O endereço atual `cstennis.vercel.app` continua servindo a versão antiga.
-2. **SMTP próprio não configurado**: sem ele, códigos de convite e links de redefinição de senha não chegam de
-   forma confiável aos usuários na nuvem (localmente chegam ao Mailpit).
+1. **Implantação em andamento**: projeto Supabase de produção (`mejykeckbtomkbcpwcnp`) e projeto Vercel `cstennis-app`
+   criados; ver [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md). O endereço `cstennis.vercel.app` continua servindo a versão antiga.
+2. **Plano Free do Supabase**: o projeto de produção pausa após ~7 dias sem uso e não tem limite de duração de
+   sessão, proteção contra senhas vazadas nem backup diário. Para dados reais o recomendado é o plano Pro
+   ([SERVICOS_E_CUSTOS.md](SERVICOS_E_CUSTOS.md)).
 3. **Antimalware em produção**: o `clamd` precisa de hospedagem em rede privada com atualização de assinaturas.
    O protocolo não tem autenticação e não pode ficar exposto na internet; na Vercel isso exige recurso de rede
    privada/IP fixo (pago) ou hospedar o app junto do `clamd`. Sem isso, os comprovantes ficam em quarentena

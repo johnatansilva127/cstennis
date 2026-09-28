@@ -8,7 +8,7 @@ sem lojas de aplicativos.
 > **Situação atual: pronto para homologação local, NÃO pronto para produção.**
 > O código, o banco (com RLS) e os testes estão completos e passam localmente, mas o uso com
 > clientes reais depende de infraestrutura que ainda não foi configurada: projeto Supabase de
-> produção, hospedagem, SMTP próprio para os e-mails de acesso, serviço antimalware hospedado,
+> produção, hospedagem, serviço antimalware hospedado,
 > plano de backup e revisão jurídica do aviso de privacidade. Veja
 > [docs/LIMITACOES.md](docs/LIMITACOES.md) e [docs/CHECKLIST_HOMOLOGACAO.md](docs/CHECKLIST_HOMOLOGACAO.md).
 
@@ -61,7 +61,8 @@ npm run seed:demo           # dados FICTÍCIOS + .demo-credentials.json (não ve
 npm run dev                 # http://localhost:3000
 ```
 
-E-mails locais (código do convite, redefinição de senha) chegam no Mailpit: http://127.0.0.1:54324.
+O acesso não usa e-mail: no link do convite a pessoa cria a própria senha, e o professor gera links de nova senha
+na ficha do aluno ou do responsável.
 
 ### Contas de demonstração (somente locais, fictícias)
 

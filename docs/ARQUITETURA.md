@@ -14,12 +14,11 @@ flowchart LR
     API["Route handlers<br/>/api/arquivos, /api/exportar,<br/>/api/jobs, /auth/*"]
   end
   subgraph Supabase
-    AUTH["Auth (GoTrue)<br/>senha, OTP por e-mail, TOTP"]
+    AUTH["Auth (GoTrue)<br/>senha, TOTP"]
     PG[("Postgres 17<br/>RLS forçado · RPCs SECURITY DEFINER<br/>outbox · auditoria · pg_cron")]
     ST[("Storage privado<br/>payment-proofs")]
   end
   CLAM["clamd (ClamAV)"]
-  SMTP["SMTP (e-mails de acesso)"]
 
   UI -- "cookies HttpOnly" --> PX --> RSC & SA & API
   RSC -- "JWT do usuário" --> PG
@@ -27,7 +26,6 @@ flowchart LR
   API -- "autoriza via RPC, depois<br/>chave de serviço só no servidor" --> ST
   UI -- "upload direto com URL assinada<br/>(uso único, caminho fixo)" --> ST
   API -- "INSTREAM" --> CLAM
-  AUTH --> SMTP
   PG -- "pg_cron: jobs diário (a cada hora) e frequente (1 min)" --> PG
 ```
 
@@ -51,7 +49,8 @@ e a chave de serviço só é usada em código marcado `server-only`.
   (`scripts/bootstrap-coach.ts`). Alunos e responsáveis: convite.
 - **Convite**: token aleatório de 32 bytes no **fragmento** da URL (`/convite#…`, não vai para o servidor nem
   para logs; é removido da barra de endereço). O banco guarda só o SHA-256; validade padrão de 48 h (configurável), uso único, preso ao
-  e-mail cadastrado; confirmação por código de 6 dígitos enviado ao e-mail; 5 tentativas erradas bloqueiam;
+  e-mail cadastrado (que vira o login); ao abrir, a pessoa cria a senha (ou, se o e-mail já tem conta, entra com a
+  senha atual); sem e-mail; 5 tentativas com outra conta bloqueiam;
   aceitação atômica (concorrência gera um único vínculo).
 - **Professor**: TOTP obrigatório (`aal2`) para qualquer dado — checado no proxy e, de forma autoritativa, no
   banco (`private.coach_org_ids()` só retorna organizações quando o JWT é `aal2`).
@@ -59,10 +58,11 @@ e a chave de serviço só é usada em código marcado `server-only`.
   15 minutos (carimbo `amr` do JWT); caso contrário o banco responde `CS428` e a tela pede o código.
 - **Cookies**: `HttpOnly`, `SameSite=Lax`, `Secure` sob HTTPS, prefixo de sessão do Supabase. Logout por POST
   revoga a sessão, apaga cookies e envia `Clear-Site-Data: "cache", "storage"`.
-- **Senha**: mínimo 10 caracteres com letras e números; recuperação por link de uso único (15 min);
+- **Senha**: mínimo 10 caracteres com letras e números; recuperação por link de uso único (1 h) gerado pelo professor na ficha
+  (auditado, sem e-mail);
   troca de senha exige login recente e encerra as outras sessões.
 - **Limite de tentativas** persistido no banco (funciona com várias instâncias): login por IP e por e-mail,
-  recuperação de senha, códigos de convite, verificação de MFA, uploads e criação de convites.
+  ativação de convite, verificação de MFA, uploads e criação de convites.
 
 ## Autorização (defesa em profundidade)
 
