@@ -4,12 +4,12 @@
 
 | # | Decisão | Motivo | Alternativa descartada |
 | --- | --- | --- | --- |
-| D1 | **Next.js (App Router) + Supabase** | O site atual já estava no Vercel; Supabase entrega Postgres com RLS, Auth com TOTP, Storage privado e pg_cron gerenciados, reduzindo peças a operar | API própria + banco + auth separados (mais superfície e custo de operação) |
+| D1 | **Next.js (App Router) + Supabase** | O site atual já estava no Vercel; Supabase entrega Postgres com RLS, Auth, Storage privado e pg_cron gerenciados, reduzindo peças a operar | API própria + banco + auth separados (mais superfície e custo de operação) |
 | D2 | **Nenhum cliente Supabase no navegador**; sessão só em cookies HttpOnly geridos pelo servidor | Tokens inacessíveis a JavaScript (mitiga XSS), logout/troca de usuário controlados no servidor | `supabase-js` no navegador com tokens em `localStorage` (vetado no escopo) |
 | D3 | **RLS só de leitura + escrita exclusivamente por RPCs `SECURITY DEFINER`** | Regras, autorização, concorrência, auditoria e outbox numa única transação; impossível contornar pela API | Escrita direta nas tabelas com políticas de INSERT/UPDATE (regras espalhadas, difícil garantir atomicidade) |
 | D4 | Esquema **multi-organização** (`organization_id` em tudo, FKs compostas) mesmo com um professor | Isolamento testável e caminho aberto para outros professores sem migração estrutural | Esquema de um único inquilino |
 | D5 | **Convite com token no fragmento da URL**, uso único; sem cadastro público | Token não vaza em logs/Referer; uso único, com validade e atômico; desde D17 o link secreto é a prova do convite | Cadastro aberto |
-| D6 | **MFA TOTP obrigatório para o professor** e step-up (≤ 15 min) para Pix, estorno, exportação e anonimização | Conta do professor concentra dados e dinheiro | SMS (custo e ataques de troca de chip) |
+| D6 | ~~**MFA TOTP obrigatório para o professor**~~ (substituída pela D18) e step-up (≤ 15 min) para Pix, estorno, exportação e anonimização | Conta do professor concentra dados e dinheiro | SMS (custo e ataques de troca de chip) |
 | D7 | **Séries versionadas** com vigência e ocorrências materializadas (90 dias) | Editar "a partir de" sem reescrever o passado; exceções por aula; detecção de conflitos com dados concretos | Regra de recorrência calculada na leitura (difícil manter histórico e exceções) |
 | D8 | **Centavos inteiros**, cobrança com snapshot do valor, geração idempotente | Sem erros de ponto flutuante; reajuste não altera cobranças passadas; job pode rodar várias vezes | Valores decimais recalculados |
 | D9 | **Inadimplência calculada na hora** (não por job) | Regularização e liberação têm efeito imediato; nada depende do job ter rodado | Flag gravada por job (atrasos e inconsistência) |
@@ -19,6 +19,7 @@
 | D13 | **pg_cron** como agendador principal + Vercel Cron diário de redundância | Jobs perto dos dados e transacionais; redundância cobre pausa do cron do banco | Somente cron da hospedagem (plano gratuito limita frequência) |
 | D14 | **CSP com nonce e `strict-dynamic`**, sem `unsafe-inline`; único hash liberado é `style="display:none"` usado pelo streaming do React | Mitiga XSS sem quebrar o framework | `unsafe-inline` para estilos |
 | D15 | **Limite de tentativas no banco** (janela fixa, chave com HMAC) | Funciona com várias instâncias serverless; não guarda IP/e-mail em claro | Memória do processo (inútil em serverless) |
+| D18 | **Professor sem verificação em duas etapas**: login só com e-mail e senha; sem step-up para Pix, estorno, exportação e anonimização (continuam auditados e com confirmação na tela) | Decisão do usuário em 28/09/2026, informado do risco: quem obtiver a senha do professor acessa os dados de todos os alunos e pode trocar a chave Pix | Manter TOTP (D6) ou exigir código só nas ações de dinheiro |
 | D17 | **Acesso sem e-mail**: no convite a pessoa cria a senha; nova senha por link de 1 h gerado pelo professor na ficha (auditado) | Produção no plano Free do Supabase sem SMTP próprio: o envio embutido só entrega para a equipe, tem limite baixo e não permite trocar os modelos. Decisão do usuário em 27/09/2026 | Código por e-mail via SMTP (Gmail com senha de app ou serviço transacional) |
 | D16 | Marca textual provisória "CS Tennis" | Não havia arquivo do logotipo (só captura de tela); não inventar nem usar a captura | Recriar o logotipo |
 

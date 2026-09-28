@@ -14,7 +14,7 @@ flowchart LR
     API["Route handlers<br/>/api/arquivos, /api/exportar,<br/>/api/jobs, /auth/*"]
   end
   subgraph Supabase
-    AUTH["Auth (GoTrue)<br/>senha, TOTP"]
+    AUTH["Auth (GoTrue)<br/>senha"]
     PG[("Postgres 17<br/>RLS forçado · RPCs SECURITY DEFINER<br/>outbox · auditoria · pg_cron")]
     ST[("Storage privado<br/>payment-proofs")]
   end
@@ -33,7 +33,7 @@ flowchart LR
 
 | Camada | Onde | Papel |
 | --- | --- | --- |
-| Proxy | `src/proxy.ts` | Renova a sessão (tokens rotacionados) em toda requisição, aplica CSP com nonce e cabeçalhos de segurança, `Cache-Control: private, no-store`, exige login em `/app` e `/professor` e nível `aal2` (TOTP) em `/professor`. |
+| Proxy | `src/proxy.ts` | Renova a sessão (tokens rotacionados) em toda requisição, aplica CSP com nonce e cabeçalhos de segurança, `Cache-Control: private, no-store`, exige login em `/app` e `/professor`. |
 | Páginas | `src/app/**/page.tsx` | Server Components que leem com o cliente Supabase do **próprio usuário**; o RLS decide o que volta. |
 | Ações | `src/app/**/actions.ts`, `src/lib/actions.ts` | Server Actions validam a entrada (Zod), chamam **uma RPC** do banco com o JWT do usuário e convertem erros de negócio (`CS4xx`) em mensagens pt-BR. Proteção de origem das Server Actions do Next.js (CSRF). |
 | Banco | `supabase/migrations/*.sql` | Fonte da verdade da autorização e das regras: RLS forçado em todas as tabelas públicas, políticas **apenas de leitura**, escritas só por funções `SECURITY DEFINER` com `search_path` vazio, checagem explícita de papel/vínculo, travas (`pg_advisory_xact_lock`, `FOR UPDATE`), auditoria e outbox na mesma transação. |
@@ -52,21 +52,20 @@ e a chave de serviço só é usada em código marcado `server-only`.
   e-mail cadastrado (que vira o login); ao abrir, a pessoa cria a senha (ou, se o e-mail já tem conta, entra com a
   senha atual); sem e-mail; 5 tentativas com outra conta bloqueiam;
   aceitação atômica (concorrência gera um único vínculo).
-- **Professor**: TOTP obrigatório (`aal2`) para qualquer dado — checado no proxy e, de forma autoritativa, no
-  banco (`private.coach_org_ids()` só retorna organizações quando o JWT é `aal2`).
-- **Step-up**: alterar Pix, estornar pagamento, exportar e anonimizar dados exigem TOTP verificado há no máximo
-  15 minutos (carimbo `amr` do JWT); caso contrário o banco responde `CS428` e a tela pede o código.
+- **Professor**: acesso só com e-mail e senha (decisão D18, sem TOTP nem step-up); o banco autoriza pelo vínculo
+  `coach` ativo (`private.coach_org_ids()`). Troca de Pix, estorno, exportação e anonimização são auditados e pedem
+  confirmação na tela.
 - **Cookies**: `HttpOnly`, `SameSite=Lax`, `Secure` sob HTTPS, prefixo de sessão do Supabase. Logout por POST
   revoga a sessão, apaga cookies e envia `Clear-Site-Data: "cache", "storage"`.
 - **Senha**: mínimo 10 caracteres com letras e números; recuperação por link de uso único (1 h) gerado pelo professor na ficha
   (auditado, sem e-mail);
   troca de senha exige login recente e encerra as outras sessões.
 - **Limite de tentativas** persistido no banco (funciona com várias instâncias): login por IP e por e-mail,
-  ativação de convite, verificação de MFA, uploads e criação de convites.
+  ativação de convite, uploads e criação de convites.
 
 ## Autorização (defesa em profundidade)
 
-1. **Proxy**: sem sessão → `/entrar`; `/professor` sem `aal2` → `/mfa`.
+1. **Proxy**: sem sessão → `/entrar`.
 2. **Páginas/ações**: `requireCoach()` / `participantContext()` resolvem o contexto no servidor; o aluno
    selecionado (cookie `cs-aluno`) é só uma preferência e é revalidado contra os vínculos a cada requisição.
 3. **Banco** (autoritativo): RLS de leitura por organização/vínculo; RPCs validam papel, vínculo, restrições

@@ -9,7 +9,7 @@ Fonte: `supabase/migrations/` (13 migrations, aplicadas em ordem). Tipos TypeScr
 | --- | --- | --- |
 | `public` | Sim (somente leitura com RLS; escrita só por RPC) | Dados de negócio (37 tabelas, todas com RLS **habilitado e forçado**) |
 | `private` | **Não** | Hash dos tokens de convite, outbox de eventos, entregas por canal (futuro), limites de tentativas, histórico de jobs, estado de restrição; funções internas |
-| `auth` / `storage` | Gerenciados pelo Supabase | Usuários, sessões, fatores MFA; metadados dos arquivos |
+| `auth` / `storage` | Gerenciados pelo Supabase | Usuários, sessões; metadados dos arquivos |
 
 ## Diagrama (principais relações)
 

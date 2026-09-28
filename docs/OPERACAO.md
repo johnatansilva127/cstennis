@@ -22,20 +22,12 @@
 
 ## Runbooks
 
-### Professor perdeu o autenticador (TOTP)
-
-1. Confirmar a identidade **fora do sistema** (contato conhecido, videochamada, etc.). Nunca por e-mail/mensagem
-   vindos de endereço novo.
-2. No painel do Supabase: *Authentication › Users* → usuário → remover o fator MFA (ou via API administrativa
-   `auth.admin.mfa.deleteFactor`) e encerrar as sessões.
-3. O professor entra com a senha e cadastra um novo autenticador (obrigatório).
-4. Registrar data, quem autorizou e como a identidade foi verificada.
-
 ### Professor esqueceu a senha
 
 O responsável técnico gera um link de nova senha (vale 1 hora, uso único) e envia ao professor:
 `npx tsx --env-file=<arquivo com as variáveis de produção> scripts/coach-password-link.ts --email <e-mail>`.
-Mesmo após redefinir, o acesso ao painel continua exigindo o TOTP.
+Antes, confirmar a identidade **fora do sistema** (contato conhecido, videochamada), nunca por mensagem de número
+ou e-mail novo: sem verificação em duas etapas (D18), esse link dá acesso total à conta do professor.
 
 ### Aluno/responsável sem acesso
 
@@ -53,7 +45,7 @@ avisos futuros. O histórico é preservado e auditado.
 
 1. Revogar o acesso da conta (ou, para o professor, trocar a senha e remover sessões no painel do Supabase).
 2. Verificar `audit_events` do período (quem fez o quê) e a tela de Pix (troca não reconhecida?).
-3. Se a chave Pix foi trocada: restaurar a correta imediatamente (exige TOTP), avisar alunos por outro canal
+3. Se a chave Pix foi trocada: restaurar a correta imediatamente, avisar alunos por outro canal
    para conferirem o recebedor, e verificar pagamentos do período no extrato.
 4. Registrar o incidente; avaliar comunicação à ANPD e aos titulares com o responsável jurídico.
 
@@ -84,4 +76,4 @@ idempotentes: após corrigir a causa, disparar manualmente com
 Alunos e responsáveis abrem pedidos pelo **Perfil** (acesso, correção, exportação, exclusão); o professor
 atende em **Configurações › Privacidade** e registra a resolução. Exportação gera JSON dos dados do aluno;
 exclusão é feita por **anonimização** (remove nome, contatos, observações, textos livres, vínculos de acesso e os
-arquivos de comprovantes; mantém valores e datas financeiros sem identificação), com MFA recente. Prazos e bases legais devem ser definidos pelo responsável jurídico ([PRIVACIDADE.md](PRIVACIDADE.md)).
+arquivos de comprovantes; mantém valores e datas financeiros sem identificação), registrada na auditoria. Prazos e bases legais devem ser definidos pelo responsável jurídico ([PRIVACIDADE.md](PRIVACIDADE.md)).

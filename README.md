@@ -21,7 +21,7 @@ Capturas geradas pelos testes E2E com dados **fictícios** (`npm run screenshots
 
 ## O que está implementado
 
-- **Professor** (conta criada só por provisionamento administrativo, com verificação em duas etapas obrigatória):
+- **Professor** (conta criada só por provisionamento administrativo; acesso com e-mail e senha — decisão D18):
   cadastro de alunos adultos e crianças (com responsável), convites de acesso de uso único, locais e quadras,
   horários fixos (individual, dupla, grupo, capacidade), matrícula direta, aprovação/recusa de pedidos de vaga,
   agenda semanal/mensal, remarcação e cancelamento de aula, indisponibilidade, chamada (presença),
@@ -43,7 +43,7 @@ Detalhes: [docs/ARQUITETURA.md](docs/ARQUITETURA.md) · [docs/MODELO_DE_DADOS.md
 ## Stack
 
 Next.js 16 (App Router, React 19, TypeScript estrito, Tailwind CSS 4) · Supabase (Postgres 17 com RLS,
-Auth com TOTP, Storage privado, pg_cron) · Zod · ClamAV (clamd) para antimalware · Vitest e Playwright.
+Auth, Storage privado, pg_cron) · Zod · ClamAV (clamd) para antimalware · Vitest e Playwright.
 
 ## Rodando localmente
 
@@ -70,7 +70,7 @@ Criadas por `npm run seed:demo`; senha comum `Demo-CSTennis-2026` (também em `.
 
 | Perfil | E-mail |
 | --- | --- |
-| Professor (pede código TOTP) | `professor@demo.cstennis.test` — código atual: `npm run totp:demo` |
+| Professor | `professor@demo.cstennis.test` |
 | Aluna adulta | `ana@demo.cstennis.test` |
 | Aluno adulto | `bruno@demo.cstennis.test` |
 | Aluna com mensalidade vencida | `carla@demo.cstennis.test` |
@@ -89,8 +89,7 @@ npx tsx --env-file=.env.production.local scripts/bootstrap-coach.ts \
 ```
 
 O script cria a conta sem senha, a organização e o vínculo de professor, e imprime **uma vez** um link de uso
-único (15 min) para o professor definir a senha. No primeiro acesso o sistema exige configurar o autenticador
-(TOTP). O arquivo `.env.production.local` contém a chave de serviço: use-o só nessa máquina e apague-o depois.
+único (1 hora) para o professor definir a senha. O arquivo `.env.production.local` contém a chave de serviço: use-o só nessa máquina e apague-o depois.
 Detalhes em [docs/PUBLICACAO.md](docs/PUBLICACAO.md).
 
 ## Comandos
@@ -104,7 +103,7 @@ Detalhes em [docs/PUBLICACAO.md](docs/PUBLICACAO.md).
 | `npm run test:e2e` | Playwright em 360px e desktop — exige `db:start`, `seed:demo` e `build` |
 | `npm run screenshots` | Regera as capturas de tela de `docs/screenshots` |
 | `npm run db:reset` · `npm run db:types` | Recria o banco local · regenera os tipos TypeScript do banco |
-| `npm run seed:demo` · `npm run totp:demo` | Dados fictícios · código TOTP do professor de demonstração |
+| `npm run seed:demo` | Dados fictícios de demonstração |
 | `npm run audit:deps` | Auditoria de dependências de produção |
 
 Resultados da última execução e cobertura dos critérios de aceite: [docs/TESTES.md](docs/TESTES.md).

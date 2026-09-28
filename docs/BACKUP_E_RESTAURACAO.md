@@ -5,11 +5,11 @@
 | Item | Onde está | Coberto pelo backup do banco? |
 | --- | --- | --- |
 | Dados de negócio, auditoria, avisos | Postgres (`public`, `private`) | Sim |
-| Usuários, fatores MFA, sessões | Postgres (`auth`) | Sim |
+| Usuários e sessões | Postgres (`auth`) | Sim |
 | Metadados dos arquivos | Postgres (`storage.objects`, `public.file_objects`) | Sim |
 | **Conteúdo dos comprovantes** | Storage (objetos) | **Não** — backup separado |
 | Agendamentos (pg_cron) | Postgres (`cron`) | Sim no backup gerenciado; no dump lógico recrie pela migration de jobs |
-| Configuração de Auth (URLs, validade do link de senha, MFA) | Painel do Supabase | Não — manter documentada (ver [PUBLICACAO.md](PUBLICACAO.md)) |
+| Configuração de Auth (URLs, validade do link de senha) | Painel do Supabase | Não — manter documentada (ver [PUBLICACAO.md](PUBLICACAO.md)) |
 | Variáveis de ambiente / segredos | Hospedagem (Vercel) e cofre de senhas | Não — guardar em cofre, nunca no repositório |
 
 ## Plano recomendado (a contratar/configurar)

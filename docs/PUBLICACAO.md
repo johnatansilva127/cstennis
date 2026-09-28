@@ -34,13 +34,12 @@ Cada ambiente tem suas próprias chaves e segredos. Nunca reutilizar a chave de 
 4. **Authentication › URL Configuration**: *Site URL* = `APP_URL`; *Redirect URLs* = `APP_URL/auth/confirm`.
 5. **E-mails**: o acesso não envia e-mails (no convite a pessoa cria a senha; nova senha por link gerado pelo
    professor). Não é preciso SMTP nem modelos de e-mail (decisão D17 em [DECISOES.md](DECISOES.md)).
-6. **Authentication › Multi-Factor**: TOTP habilitado (verificação e cadastro).
-7. **Authentication › Sessions** (recursos de plano pago): limite de sessão 30 dias e inatividade 7 dias, como
+6. **Authentication › Sessions** (recursos de plano pago): limite de sessão 30 dias e inatividade 7 dias, como
    no ambiente local. JWT de 1 hora com rotação de refresh token (padrão). No plano Free não existe; o bloco
    `[remotes.production.auth.sessions]` do `config.toml` evita que o `config push` tente aplicá-lo.
-8. **Data API**: esquemas expostos somente `public` (e `graphql_public` se desejar); **nunca** `private`.
-9. **Database**: exigir SSL; restringir acesso de rede ao banco se o plano permitir.
-10. Conferir *Advisors › Security* sem alertas críticos e rodar no SQL Editor:
+7. **Data API**: esquemas expostos somente `public` (e `graphql_public` se desejar); **nunca** `private`.
+8. **Database**: exigir SSL; restringir acesso de rede ao banco se o plano permitir.
+9. Conferir *Advisors › Security* sem alertas críticos e rodar no SQL Editor:
     `select jobname, schedule from cron.job;` (dois jobs).
 
 Alternativa ao passo manual 3–8: `npx supabase config push` com uma seção `[remotes.<ambiente>]` no
@@ -69,8 +68,8 @@ ficam em quarentena e não podem ser abertos**; o professor confere o crédito d
 ## 4. Primeiro acesso
 
 1. Provisionar o professor (`scripts/bootstrap-coach.ts`, ver README) a partir de máquina confiável.
-2. Professor define a senha pelo link de uso único e configura o autenticador (TOTP).
-3. Em **Configurações**: organização, Pix (exige confirmar o código TOTP), regras de inadimplência, retenção de
+2. Professor define a senha pelo link de uso único (acesso só com e-mail e senha — D18).
+3. Em **Configurações**: organização, Pix (com confirmação na tela; gera aviso e auditoria), regras de inadimplência, retenção de
    comprovantes, controlador e contato de privacidade.
 4. Revisar o aviso de privacidade com o responsável jurídico antes de convidar alunos.
 5. Executar o [checklist de homologação](CHECKLIST_HOMOLOGACAO.md) em staging e depois, resumido, em produção.

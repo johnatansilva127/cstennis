@@ -42,7 +42,7 @@ Enquanto estes itens não forem resolvidos, **o sistema não deve ser considerad
   em hospedagens que não sobrescrevem esses cabeçalhos, o limite por IP pode ser contornado (o limite por
   e-mail/usuário continua valendo).
 - A CSP libera, por hash, um único estilo inline (`display:none`) exigido pelo streaming do React.
-- O Supabase não oferece códigos de recuperação de MFA: perda do autenticador exige o procedimento
-  administrativo de [OPERACAO.md](OPERACAO.md).
+- **Professor sem verificação em duas etapas** (D18): a senha é a única barreira da conta que concentra os dados
+  dos alunos e a chave Pix. Mitigações: senha forte, limite de tentativas, aviso "Dados Pix alterados" e auditoria.
 - O logotipo oficial não foi fornecido; a marca textual é provisória.
 - A auditoria é mantida indefinidamente até que um prazo de retenção seja definido.

@@ -13,7 +13,7 @@ Situação registrada em 27/09/2026 (segunda sessão do dia).
 | Banco de produção | ✅ 14 migrations aplicadas; 37 tabelas com RLS forçado, 2 jobs no pg_cron, bucket `payment-proofs` privado, advisors sem alerta crítico (os avisos de `SECURITY DEFINER` são do desenho, decisão D3) |
 | Auth de produção | ✅ Cadastro público desligado, senha mínima de 10 com letras e números, Site URL e Redirect URL do app, link de nova senha de 1 hora. Sem SMTP e sem modelos de e-mail (não são usados) |
 | Vercel | ✅ Projeto `cstennis-app` (`prj_yv8dFhzsfOm4wQD1bIwi0GwNtov1`, time `team_ECSBx6qOFJXVieuXDkEJgCqE`), domínio https://cstennis-app.vercel.app. Variáveis completas em **Production** (as chaves do Supabase só em Production, não em Preview) |
-| Conta do professor | ✅ Criada em 28/09/2026 com `scripts/bootstrap-coach.ts` (organização `CS Tennis`, fuso São Paulo). Falta o professor definir a senha e o TOTP |
+| Conta do professor | ✅ Criada em 28/09/2026 com `scripts/bootstrap-coach.ts` (organização `CS Tennis`, fuso São Paulo). Acesso só com e-mail e senha (D18) |
 
 ## Decisões do usuário
 
@@ -46,7 +46,7 @@ Legenda: 🧑 = só o usuário pode fazer · 🤖 = o Claude faz.
 
 1. ✅ Versão com acesso sem e-mail publicada (28/09/2026); `/api/health` ok.
 2. **Conta do professor** (criada):
-   - 🧑 Professor abre o link de uso único, cria a senha, configura o autenticador (TOTP) e cadastra o Pix.
+   - 🧑 Professor abre o link de uso único, cria a senha e cadastra o Pix (sem verificação em duas etapas — D18).
    - Se o link expirar (1 hora): 🤖 `npm run coach:password-link -- --email <e-mail do professor>` com as variáveis de
      produção. A chave secreta vem do CLI **com `--reveal`** (`npx supabase projects api-keys --project-ref
      mejykeckbtomkbcpwcnp --reveal -o json`; sem `--reveal` ela vem mascarada e dá "Invalid API key"), passada ao

@@ -35,16 +35,16 @@ antimalware escolhido. Recomenda-se região São Paulo e registrar esses provedo
 ## Direitos dos titulares
 
 - **Acesso e portabilidade**: aluno/responsável baixa os próprios dados em JSON pelo Perfil
-  (`/api/exportar/<aluno>`), com limite de uso; o professor também pode exportar (com MFA recente).
+  (`/api/exportar/<aluno>`), com limite de uso; o professor também pode exportar (auditado).
 - **Pedidos** de acesso, correção, exportação e exclusão: abertos pelo Perfil, atendidos pelo professor em
   Configurações › Privacidade, com status e resolução registrados.
-- **Exclusão**: anonimização pelo professor (MFA recente), que remove identificação, textos livres, vínculos e
+- **Exclusão**: anonimização pelo professor (auditada), que remove identificação, textos livres, vínculos e
   arquivos, preservando valores/datas financeiros sem identificação.
 
 ## Segurança aplicada
 
 Ver [ARQUITETURA.md](ARQUITETURA.md) e [MATRIZ_DE_PERMISSOES.md](MATRIZ_DE_PERMISSOES.md): RLS forçado,
-escrita só por funções auditadas, MFA do professor, cookies HttpOnly, CSP, arquivos privados com URL curta,
+escrita só por funções auditadas, senhas fortes com limite de tentativas, cookies HttpOnly, CSP, arquivos privados com URL curta,
 antimalware, auditoria imutável e logs sem dados sensíveis. Seeds, testes e capturas usam somente dados fictícios.
 
 ## Pendências para o responsável

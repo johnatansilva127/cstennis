@@ -3,7 +3,7 @@
 Todos os testes rodam **somente no ambiente local** (Supabase CLI em `localhost`, dados fictícios). Os helpers
 recusam qualquer URL que não seja `localhost`/`127.0.0.1`.
 
-## Última execução completa (27/09/2026, após o acesso sem e-mail, a partir de banco recriado com `supabase db reset`)
+## Última execução completa (28/09/2026, após o acesso sem e-mail e a retirada da verificação em duas etapas, a partir de banco recriado com `supabase db reset`)
 
 | Etapa | Comando | Resultado |
 | --- | --- | --- |
@@ -25,6 +25,10 @@ Na rodada do acesso sem e-mail: a função nova `authorize_password_link` nascia
 não logados (permissão padrão de funções novas) — corrigido com `revoke` na migration; e a jornada E2E conferia
 mensagens de sucesso que somem quando a página atualiza (aprovação de pedido, envio e aprovação de comprovante),
 falhando de forma intermitente — passou a conferir o resultado que permanece na tela.
+
+Na rodada sem verificação em duas etapas (D18): aluno/responsável que abria a área do professor só voltava ao app
+porque passava pela tela do código; agora `requireCoach` o manda para `/app` explicitamente. E a jornada passou a
+esperar a resposta da Server Action de aprovação (o botão muda de nome enquanto a ação está pendente).
 
 ## Critérios de aceite × evidências
 
@@ -49,7 +53,7 @@ falhando de forma intermitente — passou a conferir o resultado que permanece n
 | 17 | 360 px, tablet e desktop; temas claro e escuro; teclado e rótulos | E2E `responsive.spec.ts` (sem rolagem horizontal nos dois temas), `a11y.spec.ts` (axe WCAG 2.1 AA em 31 telas × 2 temas, teclado, alvos ≥ 44 px), `smoke.spec.ts` (todas as telas sem erro de console/CSP) |
 | 18 | Teste de restauração, documentação de segredos, auditoria de dependências | [BACKUP_E_RESTAURACAO.md](BACKUP_E_RESTAURACAO.md) (executado), [OPERACAO.md](OPERACAO.md) (rotação de segredos), `npm audit` 0 |
 
-Também cobertos: MFA do professor (`aal1` sem acesso; step-up renova com novo TOTP e Pix exige MFA recente),
+Também cobertos: professor só com senha (`aal1`) acessa a própria organização e troca o Pix com auditoria e aviso (D18),
 professor de outra organização sem acesso, anônimo sem privilégios, `search_path` fixo em funções
 `SECURITY DEFINER`, esquema `private` não exposto, jobs agendados, limite de tentativas no login, recuperação de
 senha por link de uso único, cabeçalhos de segurança, BR Code conferido com o exemplo do Manual do BCB.

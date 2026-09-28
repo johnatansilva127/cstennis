@@ -1,9 +1,9 @@
 # Matriz de permissões
 
-Papéis: **Professor** (membro `coach` da organização, sempre com sessão `aal2`/TOTP), **Aluno** (adulto com
+Papéis: **Professor** (membro `coach` ativo da organização; acesso com e-mail e senha), **Aluno** (adulto com
 login vinculado ao próprio cadastro), **Responsável** (login vinculado a uma ou mais crianças) e **Anônimo**.
 Crianças não têm login. A autorização é aplicada no banco (RLS + RPCs); a interface apenas reflete o que o banco
-permite. Legenda: ✅ permitido · 👁 somente leitura · ❌ negado · 🔐 exige MFA recente (≤ 15 min).
+permite. Legenda: ✅ permitido · 👁 somente leitura · ❌ negado · 📝 auditado e com confirmação na tela.
 
 ## Recursos
 
@@ -20,10 +20,10 @@ permite. Legenda: ✅ permitido · 👁 somente leitura · ❌ negado · 🔐 ex
 | Pedido de vaga | Aprovar / recusar | Criar ¹ ², cancelar o próprio pendente | Criar ¹ ², cancelar | ❌ |
 | Aulas e presença | ✅ marcar chamada, remarcar, cancelar | 👁 ¹ | 👁 ¹ | ❌ |
 | Mensalidade (valor, vencimento), cobranças | ✅ | 👁 | 👁 | ❌ |
-| Dados do Pix para pagar | ✅ alterar 🔐 | 👁 (sempre, mesmo com restrição) | 👁 (sempre) | ❌ |
+| Dados do Pix para pagar | ✅ alterar 📝 | 👁 (sempre, mesmo com restrição) | 👁 (sempre) | ❌ |
 | Comprovante de pagamento | Conferir, aprovar, rejeitar | Enviar, retirar o próprio envio pendente, ver o próprio arquivo | idem para as crianças | ❌ |
 | Pagamento (baixa manual) | ✅ | 👁 | 👁 | ❌ |
-| Estorno de pagamento | ✅ 🔐 | ❌ | ❌ | ❌ |
+| Estorno de pagamento | ✅ 📝 | ❌ | ❌ | ❌ |
 | Regras de inadimplência e liberação manual | ✅ | ❌ | ❌ | ❌ |
 | Avaliações técnicas e metas | ✅ (rascunho, publicar, nota privada) | 👁 só publicadas / metas visíveis ¹ | 👁 idem ¹ | ❌ |
 | Jogos | 👁 + comentar | Registrar, editar, apagar sem comentário do professor ¹ | idem ¹ | ❌ |
@@ -31,8 +31,8 @@ permite. Legenda: ✅ permitido · 👁 somente leitura · ❌ negado · 🔐 ex
 | Avisos | Os próprios | Os próprios (só de alunos vinculados) | Os próprios | ❌ |
 | Perfil e tema | O próprio | O próprio | O próprio | ❌ |
 | Pedido de privacidade (acesso, correção, exportação, exclusão) | Atender | Abrir para si | Abrir para as crianças | ❌ |
-| Exportar dados do aluno | ✅ 🔐 | ✅ os próprios | ✅ das crianças | ❌ |
-| Anonimizar aluno | ✅ 🔐 | ❌ | ❌ | ❌ |
+| Exportar dados do aluno | ✅ 📝 | ✅ os próprios | ✅ das crianças | ❌ |
+| Anonimizar aluno | ✅ 📝 | ❌ | ❌ | ❌ |
 | Auditoria, saúde do sistema, configurações | ✅ | ❌ | ❌ | ❌ |
 | Jobs e rotinas internas | ❌ (somente servidor com `CRON_SECRET` / pg_cron) | ❌ | ❌ | ❌ |
 
@@ -55,7 +55,6 @@ Um irmão em dia não é afetado pela pendência de outro (restrição avaliada 
 
 ## Regras transversais
 
-- **Professor sem TOTP** (`aal1`) não lê nem escreve nada da organização.
 - **Professor de outra organização** não vê nada desta (testado).
 - **IDs enviados pelo cliente** (aluno selecionado, cobrança, arquivo) são sempre revalidados contra vínculos
   ativos; vínculo revogado perde o acesso imediatamente, inclusive a avisos futuros.

@@ -8,7 +8,7 @@ e quem executou. Nenhum dado real deve ser usado.
 
 - [ ] Migrations aplicadas (`supabase db push`) e `select jobname from cron.job` retorna os dois jobs
 - [ ] Cadastro público desligado; Site URL e Redirect URL corretos
-- [ ] TOTP habilitado; sessões com limite configurado (se o plano permitir)
+- [ ] Sessões com limite configurado (se o plano permitir)
 - [ ] Variáveis de ambiente do Vercel preenchidas por ambiente; nenhum segredo com prefixo `NEXT_PUBLIC_`
 - [ ] `https://<app>/api/health` responde; cabeçalhos: CSP, HSTS, `X-Frame-Options: DENY`, `nosniff`, `no-store`
 - [ ] Crons do Vercel executando (logs 200) e tela Configurações › Sistema sem falhas
@@ -17,9 +17,8 @@ e quem executou. Nenhum dado real deve ser usado.
 
 ## Professor
 
-- [ ] Provisionamento pelo script; link de senha funciona uma vez; TOTP obrigatório no primeiro acesso
-- [ ] Login pede TOTP; sem TOTP não há acesso a `/professor`
-- [ ] Configurar Pix pede código TOTP; aviso "Dados Pix alterados" aparece; auditoria sem a chave
+- [ ] Provisionamento pelo script; link de senha funciona uma vez; login só com e-mail e senha
+- [ ] Configurar Pix pede confirmação; aviso "Dados Pix alterados" aparece; auditoria sem a chave
 - [ ] Criar local e quadras; criar horários individual, dupla e grupo com capacidade
 - [ ] Conflitos: mesmo horário/quadra, deslocamento entre locais e aluno em duas aulas são recusados com mensagem clara
 - [ ] Cadastrar aluno adulto com mensalidade e horário; cadastrar criança com responsável novo e com responsável existente
@@ -29,11 +28,11 @@ e quem executou. Nenhum dado real deve ser usado.
 - [ ] Remarcar e cancelar uma aula; registrar indisponibilidade; alunos recebem aviso
 - [ ] Chamada: presente/falta/justificada/não informado; frequência do aluno atualiza
 - [ ] Gerar cobranças; ajustar valor com justificativa; cobrança avulsa; cancelar cobrança
-- [ ] Conferir comprovante: abrir arquivo, aprovar; rejeitar com motivo; baixa manual; estorno (pede TOTP)
+- [ ] Conferir comprovante: abrir arquivo, aprovar; rejeitar com motivo; baixa manual; estorno (pede confirmação)
 - [ ] Regras de inadimplência: aviso, bloquear pedidos, restringir módulos, carência; liberação temporária expira sozinha
 - [ ] Avaliação: rascunho não aparece ao aluno; publicar; "não avaliado" separado; metas
 - [ ] Comentar jogo do aluno; aluno não edita o comentário
-- [ ] Atender pedido de privacidade; exportar dados (pede TOTP); anonimizar aluno de teste
+- [ ] Atender pedido de privacidade; exportar dados; anonimizar aluno de teste
 - [ ] Logout em computador compartilhado: voltar no navegador não mostra dados
 
 ## Aluno adulto
