@@ -12,14 +12,16 @@ Situação registrada em 28/09/2026.
 | Supabase | ✅ Projeto **`cstennis`**, ref **`mejykeckbtomkbcpwcnp`**, São Paulo, na organização **Cs Tennis** (`bqsgmypgopxzszvaeove`, **plano Free**), em **outra conta** Supabase (a que está logada no Chrome do usuário). O conector MCP do Supabase **não enxerga** essa conta; usar o CLI (`npx supabase login` já feito neste computador) |
 | Banco de produção | ✅ 15 migrations aplicadas; 37 tabelas com RLS forçado, 2 jobs no pg_cron, bucket `payment-proofs` privado, advisors sem alerta crítico (os avisos de `SECURITY DEFINER` são do desenho, decisão D3) |
 | Auth de produção | ✅ Cadastro público desligado, senha mínima de 10 com letras e números, Site URL e Redirect URL do app, link de nova senha de 1 hora. Sem SMTP e sem modelos de e-mail (não são usados) |
-| Vercel | ✅ Projeto `cstennis-app` (`prj_yv8dFhzsfOm4wQD1bIwi0GwNtov1`, time `team_ECSBx6qOFJXVieuXDkEJgCqE`), domínio https://cstennis-app.vercel.app. Variáveis completas em **Production** (as chaves do Supabase só em Production, não em Preview) |
+| Vercel | ✅ Projeto `cstennis-app` (`prj_yv8dFhzsfOm4wQD1bIwi0GwNtov1`, time `team_ECSBx6qOFJXVieuXDkEJgCqE`), domínio principal **https://cstennis.vercel.app** (`APP_URL`, usado nos links de convite e de nova senha); https://cstennis-app.vercel.app continua servindo o mesmo app. O Site URL do Supabase segue em `cstennis-app` (os fluxos não o usam). Variáveis completas em **Production** (as chaves do Supabase só em Production, não em Preview) |
 | Conta do professor | ✅ Criada em 28/09/2026 com `scripts/bootstrap-coach.ts` (organização `CS Tennis`, fuso São Paulo). Acesso só com e-mail e senha (D18). O professor já entrou; Pix, locais, horários e alunos ainda vazios |
 
 ## Decisões do usuário
 
 - Supabase na organização **Cs Tennis (Free)**, não na organização Pro `fpzzdbjzaeelighuyyrj`. Consequências: o projeto
   pausa após ~7 dias sem uso, não há limite de sessão, proteção contra senhas vazadas nem backup diário
-  ([LIMITACOES.md](LIMITACOES.md)).
+  ([LIMITACOES.md](LIMITACOES.md)). Em 28/09/2026 o usuário decidiu **manter o plano Free**.
+- Endereço `cstennis.vercel.app` passado do app antigo para o novo em 28/09/2026 (o usuário moveu o domínio no painel
+  da Vercel; o app antigo segue em `ace-coach.vercel.app`).
 - **Acesso sem e-mail** (decisão D17 em [DECISOES.md](DECISOES.md)): no link do convite a pessoa cria a senha; quem
   esquece a senha pede ao professor, que gera na ficha um **link de nova senha** (1 hora, uso único, auditado) e envia
   pelo WhatsApp. Professor que esquecer a senha: `npm run coach:password-link` (ver [OPERACAO.md](OPERACAO.md)).
@@ -28,8 +30,8 @@ Situação registrada em 28/09/2026.
 ## Não mexer
 
 - Projeto Supabase **`rgta-tenis`** (dados reais de outro sistema) e demais projetos das duas contas.
-- Projeto Vercel **`cstennis`** (`prj_51qDxOZlUc3n28SLTSJx8LvEKcRR`), que publica `cstennis.vercel.app` a partir de
-  **outro repositório** (`johnatansilva127/ace-coach`). Trocar esse domínio é decisão do usuário, após a homologação.
+- Projeto Vercel **`cstennis`** (`prj_51qDxOZlUc3n28SLTSJx8LvEKcRR`), o app antigo, publicado em `ace-coach.vercel.app` a
+  partir de **outro repositório** (`johnatansilva127/ace-coach`).
 - Não gravar segredos no repositório. Testes automatizados só no ambiente local.
 
 ## Como rodar os testes neste computador (Windows)
@@ -46,7 +48,7 @@ Legenda: 🧑 = só o usuário pode fazer · 🤖 = o Claude faz.
 
 1. ✅ Versão com acesso sem e-mail publicada (28/09/2026); `/api/health` ok.
 2. **Conta do professor** (criada):
-   - 🧑 Professor abre o link de uso único, cria a senha e cadastra o Pix (sem verificação em duas etapas — D18).
+   - ✅ Professor criou a senha e já entrou. 🧑 Falta cadastrar Pix, local e quadras, e horários.
    - Se o link expirar (1 hora): 🤖 `npm run coach:password-link -- --email <e-mail do professor>` com as variáveis de
      produção. A chave secreta vem do CLI **com `--reveal`** (`npx supabase projects api-keys --project-ref
      mejykeckbtomkbcpwcnp --reveal -o json`; sem `--reveal` ela vem mascarada e dá "Invalid API key"), passada ao
@@ -55,9 +57,9 @@ Legenda: 🧑 = só o usuário pode fazer · 🤖 = o Claude faz.
    criar senha, gerar link de nova senha).
 4. ✅ Segredos `RATE_LIMIT_SECRET` e `CRON_SECRET` trocados na Vercel em 28/09/2026 (valores gerados direto na área de
    transferência do usuário e colados por ele; ninguém os viu) e novo deploy feito.
-5. 🧑 Decidir sobre a pausa do plano Free: manter o app em uso (o banco não pausa enquanto houver acesso) ou migrar
-   para o Pro. O app antigo usava um "keep-alive" descrito em `MANUTENCAO-anti-pause.md`, na pasta do projeto no
-   Google Drive do usuário.
+5. ✅ Plano Free mantido. Os crons diários da Vercel (`/api/jobs/*`, 06:15 e 06:40 UTC) acessam o banco todo dia, o que
+   deve evitar a pausa por inatividade (o Supabase não garante). Se pausar: restaurar no painel do Supabase.
+6. ✅ `cstennis.vercel.app` aponta para o app novo e `APP_URL` foi trocado para ele (28/09/2026).
 
 ## Pendências de negócio (não bloqueiam o primeiro deploy)
 
