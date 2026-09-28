@@ -840,6 +840,9 @@ isOneToOne: false
 "authorize_file_download":
 { Args: { "p_file_id": string }; Returns: Json
                            },
+"authorize_password_link":
+{ Args: { "p_kind": Database["public"]['Enums']["invitation_kind"],"p_target_id": string }; Returns: string
+                           },
 "begin_payment_submission":
 { Args: { "p_detected_type": string,"p_height"?: number,"p_invoice_id": string,"p_mime_type": string,"p_note"?: string,"p_sha256": string,"p_size_bytes": number,"p_width"?: number }; Returns: Json
                            },
