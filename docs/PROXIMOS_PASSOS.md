@@ -13,7 +13,7 @@ Situação registrada em 27/09/2026 (segunda sessão do dia).
 | Banco de produção | ✅ 14 migrations aplicadas; 37 tabelas com RLS forçado, 2 jobs no pg_cron, bucket `payment-proofs` privado, advisors sem alerta crítico (os avisos de `SECURITY DEFINER` são do desenho, decisão D3) |
 | Auth de produção | ✅ Cadastro público desligado, senha mínima de 10 com letras e números, Site URL e Redirect URL do app, link de nova senha de 1 hora. Sem SMTP e sem modelos de e-mail (não são usados) |
 | Vercel | ✅ Projeto `cstennis-app` (`prj_yv8dFhzsfOm4wQD1bIwi0GwNtov1`, time `team_ECSBx6qOFJXVieuXDkEJgCqE`), domínio https://cstennis-app.vercel.app. Variáveis completas em **Production** (as chaves do Supabase só em Production, não em Preview) |
-| Conta do professor | ❌ Não criada |
+| Conta do professor | ✅ Criada em 28/09/2026 com `scripts/bootstrap-coach.ts` (organização `CS Tennis`, fuso São Paulo). Falta o professor definir a senha e o TOTP |
 
 ## Decisões do usuário
 
@@ -44,13 +44,13 @@ Situação registrada em 27/09/2026 (segunda sessão do dia).
 
 Legenda: 🧑 = só o usuário pode fazer · 🤖 = o Claude faz.
 
-1. 🤖 **Publicar** a versão com acesso sem e-mail (push na branch dispara o deploy de produção) e conferir `/api/health`.
-2. **Conta do professor**:
-   - 🧑 Informar o e-mail do professor.
-   - 🤖 `npx tsx --env-file=<arquivo local com SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e APP_URL de produção>
-     scripts/bootstrap-coach.ts --email <e-mail> --name "<nome>"`: cria a conta e a organização e imprime o link
-     para criar a senha (1 hora). O arquivo com a chave de serviço fica **fora** do repositório e é apagado depois.
-   - 🧑 Professor abre o link, cria a senha, configura o autenticador (TOTP) e cadastra o Pix.
+1. ✅ Versão com acesso sem e-mail publicada (28/09/2026); `/api/health` ok.
+2. **Conta do professor** (criada):
+   - 🧑 Professor abre o link de uso único, cria a senha, configura o autenticador (TOTP) e cadastra o Pix.
+   - Se o link expirar (1 hora): 🤖 `npm run coach:password-link -- --email <e-mail do professor>` com as variáveis de
+     produção. A chave secreta vem do CLI **com `--reveal`** (`npx supabase projects api-keys --project-ref
+     mejykeckbtomkbcpwcnp --reveal -o json`; sem `--reveal` ela vem mascarada e dá "Invalid API key"), passada ao
+     script no mesmo comando, sem gravar em arquivo nem mostrar na tela.
 3. 🧑 **Homologação**: seguir o [checklist](CHECKLIST_HOMOLOGACAO.md) com um aluno de teste (convite pelo WhatsApp,
    criar senha, gerar link de nova senha).
 4. 🤖 **Trocar os segredos** `RATE_LIMIT_SECRET` e `CRON_SECRET` na Vercel (os atuais apareceram no histórico de uma
