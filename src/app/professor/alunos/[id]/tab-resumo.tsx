@@ -2,13 +2,13 @@ import { ActionForm, CheckboxField, SelectField, TextAreaField, TextField } from
 import { Card, CardHeader } from "@/components/ui/card";
 import { Alert, StatusBadge } from "@/components/ui/status";
 import { Disclosure } from "@/components/ui/disclosure";
-import { GenerateInviteButton } from "@/components/generate-invite";
+import { GenerateInviteButton, PasswordLinkButton } from "@/components/generate-invite";
 import { env } from "@/lib/env";
 import { formatDate, formatDateTime, isoToZonedLocal } from "@/lib/dates";
 import { RESTRICTION_LEVEL, RESTRICTION_MODE } from "@/lib/labels";
 import type { TabProps } from "./types";
 import {
-  createInviteAction, createOverrideAction, linkGuardianAction, revokeAccessAction, revokeInviteAction, revokeOverrideAction,
+  createInviteAction, createOverrideAction, createPasswordLinkAction, linkGuardianAction, revokeAccessAction, revokeInviteAction, revokeOverrideAction,
   setPrivateNoteAction, setStatusAction, studentPolicyAction, unlinkGuardianAction, updateStudentAction,
 } from "./actions";
 
@@ -58,6 +58,7 @@ export async function TabResumo({ studentId, student, supabase, today, tz }: Tab
             {link.data ? (
               <>
                 <StatusBadge tone="success">Conta ativa desde {formatDate(link.data.created_at.slice(0, 10))}</StatusBadge>
+                <PasswordLinkButton action={createPasswordLinkAction.bind(null, "student", studentId)} who="o aluno" />
                 <Disclosure summary="Revogar acesso do aluno">
                   <ActionForm action={revokeAccessAction.bind(null, "student", studentId)} submitLabel="Revogar acesso" submitVariant="danger"
                     confirm="Revogar o acesso deste aluno? O histórico é mantido.">
@@ -99,6 +100,9 @@ export async function TabResumo({ studentId, student, supabase, today, tz }: Tab
                     {!g.guardians.user_id && g.guardians.email ? (
                       <GenerateInviteButton action={createInviteAction.bind(null, "guardian", g.guardians.id)} appUrl={appUrl}
                         who={g.guardians.full_name} label={inv ? "Gerar novo link" : "Gerar convite"} />
+                    ) : null}
+                    {g.guardians.user_id ? (
+                      <PasswordLinkButton action={createPasswordLinkAction.bind(null, "guardian", g.guardians.id)} who={g.guardians.full_name} />
                     ) : null}
                   </div>
                   <Disclosure summary="Revogar vínculo com esta criança">

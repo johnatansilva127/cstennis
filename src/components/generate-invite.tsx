@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { UserPlus } from "lucide-react";
+import { KeyRound, UserPlus } from "lucide-react";
 import { buttonClasses } from "@/components/ui/button";
 import { Alert } from "@/components/ui/status";
 import { InviteLinkPanel } from "@/components/invite-link";
@@ -26,6 +26,31 @@ export function GenerateInviteButton({ action, appUrl, who, label = "Gerar convi
           }
         })}>
         <UserPlus aria-hidden className="size-4" /> {pending ? "Gerando…" : label}
+      </button>
+      {result && !result.ok ? <Alert tone="danger">{result.message}</Alert> : null}
+    </div>
+  );
+}
+
+export function PasswordLinkButton({ action, who }: {
+  action: () => Promise<ActionState<{ url: string; expires_at: string }>>; who: string;
+}) {
+  const [result, setResult] = useState<ActionState<{ url: string; expires_at: string }> | null>(null);
+  const [pending, start] = useTransition();
+  if (result?.ok && result.data) {
+    return <InviteLinkPanel kind="password" url={result.data.url} expiresAt={result.data.expires_at} who={who} />;
+  }
+  return (
+    <div className="space-y-2">
+      <button type="button" disabled={pending} className={buttonClasses("secondary")}
+        onClick={() => start(async () => {
+          try {
+            setResult(await action());
+          } catch {
+            setResult({ ok: false, message: "Falha de conexão. Tente novamente." });
+          }
+        })}>
+        <KeyRound aria-hidden className="size-4" /> {pending ? "Gerando…" : "Gerar link de nova senha"}
       </button>
       {result && !result.ok ? <Alert tone="danger">{result.message}</Alert> : null}
     </div>

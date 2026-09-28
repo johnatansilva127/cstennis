@@ -9,8 +9,8 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status";
 import { Disclosure } from "@/components/ui/disclosure";
 import { ActionForm, SelectField, TextField } from "@/components/ui/form";
-import { GenerateInviteButton } from "@/components/generate-invite";
-import { createInviteAction, revokeAccessAction, unlinkGuardianAction } from "../../alunos/[id]/actions";
+import { GenerateInviteButton, PasswordLinkButton } from "@/components/generate-invite";
+import { createInviteAction, createPasswordLinkAction, revokeAccessAction, unlinkGuardianAction } from "../../alunos/[id]/actions";
 import { linkChildAction, updateGuardianAction } from "../actions";
 
 export const metadata: Metadata = { title: "Responsável" };
@@ -43,12 +43,15 @@ export default async function GuardianPage({ params }: PageProps<"/professor/res
         <Card>
           <CardHeader title="Acesso" />
           {g.user_id ? (
-            <Disclosure summary="Revogar acesso do responsável">
-              <ActionForm action={revokeAccessAction.bind(null, "guardian", id)} submitLabel="Revogar acesso" submitVariant="danger"
-                confirm="O responsável perderá o acesso a todas as crianças. Continuar?">
-                <TextField name="reason" label="Motivo" required />
-              </ActionForm>
-            </Disclosure>
+            <div className="space-y-3">
+              <PasswordLinkButton action={createPasswordLinkAction.bind(null, "guardian", id)} who={g.full_name} />
+              <Disclosure summary="Revogar acesso do responsável">
+                <ActionForm action={revokeAccessAction.bind(null, "guardian", id)} submitLabel="Revogar acesso" submitVariant="danger"
+                  confirm="O responsável perderá o acesso a todas as crianças. Continuar?">
+                  <TextField name="reason" label="Motivo" required />
+                </ActionForm>
+              </Disclosure>
+            </div>
           ) : g.email ? (
             <GenerateInviteButton action={createInviteAction.bind(null, "guardian", id)} appUrl={env().APP_URL} who={g.full_name}
               label={invite.data ? "Gerar novo link" : "Gerar convite"} />

@@ -1,7 +1,9 @@
 "use server";
 
 import { allValues, opt, runRpc, str } from "@/lib/actions";
-import type { ActionState } from "@/lib/errors";
+import { env } from "@/lib/env";
+import { logServerError, type ActionState } from "@/lib/errors";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { parseBRLToCents } from "@/lib/money";
 import { isValidDate, zonedLocalToIso } from "@/lib/dates";
 
@@ -38,6 +40,39 @@ export async function createInviteAction(kind: "student" | "guardian", targetId:
 
 export async function revokeInviteAction(invitationId: string, _: ActionState) {
   return runRpc("coach", "revoke_invitation", { p_invitation_id: invitationId }, { success: "Convite revogado." });
+}
+
+/** Validade do link de nova senha: espelha `auth.email.otp_expiry` em supabase/config.toml. */
+const PASSWORD_LINK_SECONDS = 3600;
+
+/**
+ * Link de nova senha que o professor envia pelo WhatsApp (sem e-mail). A RPC autoriza e
+ * audita; o link é gerado com a chave de serviço e mostrado uma única vez.
+ */
+export async function createPasswordLinkAction(
+  kind: "student" | "guardian", targetId: string,
+): Promise<ActionState<{ url: string; expires_at: string }>> {
+  const auth = await runRpc<string>("coach", "authorize_password_link", { p_kind: kind, p_target_id: targetId });
+  if (!auth.ok || !auth.data) return { ok: false, message: auth.message, redirectTo: auth.redirectTo };
+  const admin = createSupabaseAdminClient();
+  const { data: user, error: userError } = await admin.auth.admin.getUserById(auth.data);
+  const email = user?.user?.email;
+  if (userError || !email) {
+    logServerError("password-link:user", userError);
+    return { ok: false, message: "Não foi possível gerar o link agora." };
+  }
+  const { data: link, error } = await admin.auth.admin.generateLink({ type: "recovery", email });
+  if (error) {
+    logServerError("password-link", error);
+    return { ok: false, message: "Não foi possível gerar o link agora." };
+  }
+  return {
+    ok: true,
+    data: {
+      url: `${env().APP_URL}/auth/confirm?token_hash=${link.properties.hashed_token}&type=recovery`,
+      expires_at: new Date(Date.now() + PASSWORD_LINK_SECONDS * 1000).toISOString(),
+    },
+  };
 }
 
 export async function revokeAccessAction(kind: "student" | "guardian", targetId: string, _: ActionState, fd: FormData) {
