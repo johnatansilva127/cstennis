@@ -19,6 +19,7 @@
     "env:local": "node scripts/local-env.mjs",
     "seed:demo": "tsx --env-file=.env.local scripts/seed-demo.ts",
     "coach:bootstrap": "tsx scripts/bootstrap-coach.ts",
+    "coach:password-link": "tsx scripts/coach-password-link.ts",
     "totp:demo": "tsx scripts/totp.ts",
     "audit:deps": "npm audit --omit=dev"
   },
